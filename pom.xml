@@ -6,7 +6,7 @@
 
     <groupId>com.muhammaddaffa</groupId>
     <artifactId>MDLib</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
 
     <name>MDLib</name>
 
@@ -82,7 +82,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <createDependencyReducedPom>true</createDependencyReducedPom>
                         </configuration>
                     </execution>
                 </executions>
@@ -112,6 +112,10 @@
         <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
+        </repository>
+        <repository>
+            <id>maven-central</id>
+            <url>https://oss.sonatype.org/content/groups/public</url>
         </repository>
     </repositories>
 
