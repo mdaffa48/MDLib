@@ -11,6 +11,9 @@ public final class MDLib {
 
     private static JavaPlugin instance;
 
+    public static boolean VERBOSE_OUTPUT = false;
+    public static boolean SILENT_LOGS = false;
+
     private static boolean PLACEHOLDER_API;
     private static boolean VAULT;
 
@@ -18,16 +21,20 @@ public final class MDLib {
      * This method should be executed in JavaPlugin#onLoad
      */
     public static void inject(JavaPlugin plugin) {
-        instance = plugin;
         // load the command api
-        CommandAPI.onLoad(new CommandAPIBukkitConfig(plugin));
+        CommandAPI.onLoad(new CommandAPIBukkitConfig(plugin)
+                .verboseOutput(VERBOSE_OUTPUT)
+                .silentLogs(SILENT_LOGS));
     }
 
     /**
      * This method should be executed in JavaPlugin#onEnable
      */
-    public static void onEnable() {
+    public static void onEnable(JavaPlugin plugin) {
+        // enable the command api
         CommandAPI.onEnable();
+        // initialize the instance
+        instance = plugin;
         // check if server is using placeholderapi
         PLACEHOLDER_API = Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null;
         VAULT = Bukkit.getPluginManager().getPlugin("VAULT") != null;
@@ -37,6 +44,14 @@ public final class MDLib {
         }
         // register the gui library
         SimpleInventoryManager.register(instance);
+    }
+
+    /**
+     * This method should be executed in JavaPlugin#onDisable
+     * @return
+     */
+    public static void shutdown() {
+        CommandAPI.onDisable();
     }
 
     public static boolean usingPlaceholderAPI() {
