@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.DecimalFormat;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -23,6 +24,14 @@ import java.util.stream.Collectors;
 public class Common {
 
     private static final DecimalFormat decimalFormat = new DecimalFormat("###,###,###,###,###.##");
+
+    public static double getRandomNumberBetween(double min, double max) {
+        return ThreadLocalRandom.current().nextDouble(max - min) + min;
+    }
+
+    public static int getRandomNumberBetween(int min, int max) {
+        return ThreadLocalRandom.current().nextInt(max - min) + min;
+    }
 
     public static boolean isValid(List<?> list, int index) {
         try {
