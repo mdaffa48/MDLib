@@ -12,7 +12,7 @@ public final class MDLib {
     private static JavaPlugin instance;
 
     public static boolean VERBOSE_OUTPUT = false;
-    public static boolean SILENT_LOGS = false;
+    public static boolean SILENT_LOGS = true;
 
     private static boolean PLACEHOLDER_API;
     private static boolean VAULT;
