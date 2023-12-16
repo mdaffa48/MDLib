@@ -19,6 +19,10 @@ public class Config {
 
     private static final Map<String, Config> configMap = new HashMap<>();
 
+    public static void registerConfig(String configName, String directory, boolean shouldReload) {
+        Config.registerConfig(new Config(configName, directory, shouldReload));
+    }
+
     public static void registerConfig(Config config) {
         configMap.put(config.getConfigName(), config);
     }
