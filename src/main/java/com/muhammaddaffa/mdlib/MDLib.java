@@ -1,10 +1,13 @@
 package com.muhammaddaffa.mdlib;
 
+import com.muhammaddaffa.mdlib.gui.SimpleInventory;
 import com.muhammaddaffa.mdlib.gui.SimpleInventoryManager;
 import com.muhammaddaffa.mdlib.hooks.VaultEconomy;
+import com.muhammaddaffa.mdlib.worldguards.listeners.RegionListener;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
 import org.bukkit.Bukkit;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class MDLib {
@@ -14,8 +17,7 @@ public final class MDLib {
     public static boolean VERBOSE_OUTPUT = false;
     public static boolean SILENT_LOGS = true;
 
-    private static boolean PLACEHOLDER_API;
-    private static boolean VAULT;
+    private static boolean PLACEHOLDER_API, VAULT, WORLD_GUARD;
 
     /**
      * This method should be executed in JavaPlugin#onLoad
@@ -38,12 +40,9 @@ public final class MDLib {
         // check if server is using placeholderapi
         PLACEHOLDER_API = Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null;
         VAULT = Bukkit.getPluginManager().getPlugin("VAULT") != null;
-        // register vault
-        if (usingVault()) {
-            VaultEconomy.init();
-        }
-        // register the gui library
-        SimpleInventoryManager.register(instance);
+        WORLD_GUARD = Bukkit.getPluginManager().getPlugin("WorldGuard") != null;
+        // Register the listeners
+        registerListeners();
     }
 
     /**
@@ -52,6 +51,26 @@ public final class MDLib {
      */
     public static void shutdown() {
         CommandAPI.onDisable();
+    }
+
+    private static void registerListeners() {
+        PluginManager pm = Bukkit.getPluginManager();
+        // Register events
+        if (usingWorldGuard()) {
+            pm.registerEvents(new RegionListener(), instance);
+        }
+
+        // If using vault, register the VaultEconomy
+        if (usingVault()) {
+            VaultEconomy.init();
+        }
+
+        // Register the gui library
+        SimpleInventoryManager.register(instance);
+    }
+
+    public static boolean usingWorldGuard() {
+        return WORLD_GUARD;
     }
 
     public static boolean usingPlaceholderAPI() {

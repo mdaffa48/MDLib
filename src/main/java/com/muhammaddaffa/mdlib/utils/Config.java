@@ -2,11 +2,13 @@ package com.muhammaddaffa.mdlib.utils;
 
 import com.muhammaddaffa.mdlib.MDLib;
 import org.bukkit.Location;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -87,6 +89,42 @@ public class Config {
         }
 
         this.config = YamlConfiguration.loadConfiguration(file);
+        // Register the config
+        Config.registerConfig(this);
+    }
+
+    public void broadcast(String path) {
+        this.broadcast(path, null);
+    }
+
+    public void broadcast(String path, @Nullable Placeholder placeholder) {
+        List<String> messages = this.getStringList(path);
+        // Check if the messages are empty
+        if (messages.isEmpty()) {
+            // Send one line message
+            Common.broadcast(this.getString(path), placeholder);
+        } else {
+            // Send multiple line messages
+            messages.forEach(message ->
+                    Common.broadcast(message, placeholder));
+        }
+    }
+
+    public void sendMessage(CommandSender sender, String path) {
+        this.sendMessage(sender, path, null);
+    }
+
+    public void sendMessage(CommandSender sender, String path, @Nullable Placeholder placeholder) {
+        List<String> messages = this.getStringList(path);
+        // Check if the messages are empty
+        if (messages.isEmpty()) {
+            // Send one line message
+            Common.sendMessage(sender, this.getString(path), placeholder);
+        } else {
+            // Send multiple line messages
+            messages.forEach(message ->
+                    Common.sendMessage(sender, message, placeholder));
+        }
     }
 
     public String getConfigName() {
@@ -102,7 +140,11 @@ public class Config {
     }
 
     public String getString(String path) {
-        return this.getConfig().getString(path);
+        return this.getString(path, null);
+    }
+
+    public String getString(String path, String defaultValue) {
+        return this.getConfig().getString(path, defaultValue);
     }
 
     public List<String> getStringList(String path) {
@@ -110,7 +152,11 @@ public class Config {
     }
 
     public int getInt(String path) {
-        return this.getConfig().getInt(path);
+        return this.getInt(path, 0);
+    }
+
+    public int getInt(String path, int defaultValue) {
+        return this.getConfig().getInt(path, defaultValue);
     }
 
     public List<Integer> getIntegerList(String path) {
@@ -118,7 +164,11 @@ public class Config {
     }
 
     public double getDouble(String path) {
-        return this.getConfig().getDouble(path);
+        return this.getDouble(path, 0.0);
+    }
+
+    public double getDouble(String path, double defaultValue) {
+        return this.getConfig().getDouble(path, defaultValue);
     }
 
     public boolean getBoolean(String path) {

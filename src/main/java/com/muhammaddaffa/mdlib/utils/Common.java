@@ -43,10 +43,12 @@ public class Common {
         }
     }
 
+    @Deprecated
     public static void configBroadcast(String configName, String path) {
         configBroadcast(configName, path, null);
     }
 
+    @Deprecated
     public static void configBroadcast(String configName, String path, @Nullable Placeholder placeholder) {
         Config config = Config.getConfig(configName);
         if (config == null) {
@@ -56,10 +58,12 @@ public class Common {
         configBroadcast(config, path, placeholder);
     }
 
+    @Deprecated
     public static void configBroadcast(@NotNull Config config, String path) {
         configBroadcast(config, path, null);
     }
 
+    @Deprecated
     public static void configBroadcast(@NotNull Config config, String path, @Nullable Placeholder placeholder) {
         FileConfiguration fileConfiguration = config.getConfig();
         if (fileConfiguration.isList(path)) {
@@ -150,10 +154,12 @@ public class Common {
         }
     }
 
+    @Deprecated
     public static void configMessage(String configName, CommandSender sender, String path) {
         configMessage(configName, sender, path, null);
     }
 
+    @Deprecated
     public static void configMessage(String configName, CommandSender sender, String path, @Nullable Placeholder placeholder) {
         Config config = Config.getConfig(configName);
         if (config == null) {
@@ -163,10 +169,12 @@ public class Common {
         configMessage(config, sender, path, placeholder);
     }
 
+    @Deprecated
     public static void configMessage(@NotNull Config config, CommandSender sender, String path) {
         configMessage(config, sender, path, null);
     }
 
+    @Deprecated
     public static void configMessage(@NotNull Config config, CommandSender sender, String path, @Nullable Placeholder placeholder) {
         FileConfiguration fileConfiguration = config.getConfig();
         if (fileConfiguration.isList(path)) {
