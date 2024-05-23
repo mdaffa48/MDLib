@@ -4,7 +4,7 @@
   <groupId>com.muhammaddaffa</groupId>
   <artifactId>MDLib</artifactId>
   <name>MDLib</name>
-  <version>1.6.1</version>
+  <version>1.7</version>
   <description>A library for plugin that was created for helping spigot plugin development</description>
   <url>https://muhammaddaffa.com</url>
   <build>
@@ -50,6 +50,10 @@
             <relocation>
               <pattern>com.cryptomorin.xseries</pattern>
               <shadedPattern>com.muhammaddaffa.mdlib.xseries</shadedPattern>
+            </relocation>
+            <relocation>
+              <pattern>com.jeff_media.updatechecker</pattern>
+              <shadedPattern>com.muhammaddaffa.mdlib.utils.updatechecker</shadedPattern>
             </relocation>
           </relocations>
           <filters>
@@ -97,6 +101,14 @@
       <id>maven-central</id>
       <url>https://oss.sonatype.org/content/groups/public</url>
     </repository>
+    <repository>
+      <id>sk89q-repo</id>
+      <url>https://maven.enginehub.org/repo/</url>
+    </repository>
+    <repository>
+      <id>jeff-media-public</id>
+      <url>https://repo.jeff-media.com/public/</url>
+    </repository>
   </repositories>
   <dependencies>
     <dependency>
@@ -108,13 +120,19 @@
     <dependency>
       <groupId>com.github.MilkBowl</groupId>
       <artifactId>VaultAPI</artifactId>
-      <version>1.7</version>
+      <version>1.7.1</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>me.clip</groupId>
       <artifactId>placeholderapi</artifactId>
       <version>2.11.5</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.sk89q.worldguard</groupId>
+      <artifactId>worldguard-bukkit</artifactId>
+      <version>7.1.0-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>
