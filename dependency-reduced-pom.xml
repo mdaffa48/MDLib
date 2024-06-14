@@ -25,7 +25,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.5.0</version>
+        <version>3.6.0</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -63,7 +63,6 @@
                 <exclude>com/cryptomorin/xseries/XBiome*</exclude>
                 <exclude>com/cryptomorin/xseries/NMSExtras*</exclude>
                 <exclude>com/cryptomorin/xseries/NoteBlockMusic*</exclude>
-                <exclude>com/cryptomorin/xseries/SkullCacheListener*</exclude>
                 <exclude>com/cryptomorin/xseries/XBlock*</exclude>
                 <exclude>com/cryptomorin/xseries/XEnchantment*</exclude>
                 <exclude>com/cryptomorin/xseries/XEntity*</exclude>
@@ -113,8 +112,8 @@
   <dependencies>
     <dependency>
       <groupId>org.spigotmc</groupId>
-      <artifactId>spigot-api</artifactId>
-      <version>1.20.6-R0.1-SNAPSHOT</version>
+      <artifactId>spigot</artifactId>
+      <version>1.21-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
