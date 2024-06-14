@@ -1,6 +1,6 @@
 package com.muhammaddaffa.mdlib.utils;
 
-import com.cryptomorin.xseries.SkullUtils;
+import com.cryptomorin.xseries.XSkull;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -198,17 +198,17 @@ public class ItemBuilder {
     }
 
     public ItemBuilder skull(String identifier){
-        SkullUtils.applySkin(this.meta, identifier);
+        XSkull.of(this.meta).profile(identifier).apply();
         return this;
     }
 
     public ItemBuilder skull(OfflinePlayer identifier){
-        SkullUtils.applySkin(this.meta, identifier);
+        XSkull.of(this.meta).profile(identifier).apply();
         return this;
     }
 
     public ItemBuilder skull(UUID identifier){
-        SkullUtils.applySkin(this.meta, identifier);
+        XSkull.of(this.meta).profile(identifier).apply();
         return this;
     }
 
@@ -218,6 +218,16 @@ public class ItemBuilder {
             this.lore(placeholder.translate(this.meta.getLore()));
         }
         return this;
+    }
+
+    @Nullable
+    public static ItemBuilder fromConfig(Config config, String path) {
+        return fromConfig(config, path, null);
+    }
+
+    @Nullable
+    public static ItemBuilder fromConfig(Config config, String path, @Nullable Placeholder placeholder) {
+        return fromConfig(config.getConfig(), path, placeholder);
     }
 
     @Nullable
@@ -246,6 +256,7 @@ public class ItemBuilder {
         }
         // get all the available variables
         String materialString = section.getString("material");
+        if (placeholder != null) materialString = placeholder.translate(materialString);
         Integer cmd = section.get("custom-model-data") == null ? null : section.getInt("custom-model-data");
         int amount = section.getInt("amount");
         String displayName = section.getString("display-name");
