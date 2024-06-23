@@ -8,7 +8,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -59,7 +58,7 @@ public class Config {
     private boolean shouldReload = false;
 
     public Config(String configName, String directory, boolean shouldReload) {
-        JavaPlugin plugin = MDLib.getInstance();
+        JavaPlugin plugin = MDLib.instance();
         this.configName = configName;
         this.shouldReload = shouldReload;
 

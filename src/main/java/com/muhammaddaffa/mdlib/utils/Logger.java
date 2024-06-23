@@ -6,25 +6,25 @@ public class Logger {
 
     public static void info(String... messages) {
         for (String message : messages) {
-            MDLib.getInstance().getLogger().info(message);
+            MDLib.instance().getLogger().info(message);
         }
     }
 
     public static void warning(String... messages) {
         for (String message : messages) {
-            MDLib.getInstance().getLogger().warning(message);
+            MDLib.instance().getLogger().warning(message);
         }
     }
 
     public static void severe(String... messages) {
         for (String message : messages) {
-            MDLib.getInstance().getLogger().severe(message);
+            MDLib.instance().getLogger().severe(message);
         }
     }
 
     public static void finest(String... messages) {
         for (String message : messages) {
-            MDLib.getInstance().getLogger().finest(message);
+            MDLib.instance().getLogger().finest(message);
         }
     }
     

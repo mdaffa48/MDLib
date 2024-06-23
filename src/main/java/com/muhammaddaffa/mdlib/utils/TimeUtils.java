@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class TimeParser {
+public class TimeUtils {
 
     private static final long TICK_MS = 50;
     private static final long SECOND_MS = 1000;
@@ -14,6 +14,14 @@ public class TimeParser {
     private static final long HOUR_MS = MINUTE_MS * 60;
     private static final long DAY_MS = HOUR_MS * 24;
     private static final long YEAR_MS = DAY_MS * 365;
+
+    private static final int DAYS_IN_SECOND = 86400;
+
+    public static String APPEND_DAYS = "d";
+    public static String APPEND_HOURS = "h";
+    public static String APPEND_MINUTES = "m";
+    public static String APPEND_SECONDS = "s";
+    public static boolean SPACE_AFTER_APPEND = true;
 
     private static final Map<String, Long> unitMultipliers = new HashMap<>();
 
@@ -35,11 +43,11 @@ public class TimeParser {
 
     private long milliseconds;
 
-    public TimeParser(long time, TimeUnit timeUnit) {
+    public TimeUtils(long time, TimeUnit timeUnit) {
         this(TimeUnit.MILLISECONDS.convert(time, timeUnit));
     }
 
-    private TimeParser(long milliseconds) {
+    private TimeUtils(long milliseconds) {
         if(milliseconds < 0) {
             throw new IllegalArgumentException("Number of milliseconds cannot be less than 0");
         }
@@ -91,7 +99,7 @@ public class TimeParser {
             timeString.append(", ").append(time).append(" ms");
         }
 
-        if(timeString.length() == 0) {
+        if(timeString.isEmpty()) {
             return "0 seconds";
         }
 
@@ -109,7 +117,7 @@ public class TimeParser {
     }
 
     @Nullable
-    public static TimeParser fromString(String timeString) throws TimeParseException {
+    public static TimeUtils fromString(String timeString) throws TimeParseException {
         if (timeString == null || timeString.isEmpty()) return null;
 
         long totalMilliseconds = 0;
@@ -147,7 +155,7 @@ public class TimeParser {
             totalMilliseconds += parseTimeComponent(number.toString(), unit.toString());
         }
 
-        return new TimeParser(totalMilliseconds);
+        return new TimeUtils(totalMilliseconds);
     }
 
     private static double parseTimeComponent(String magnitudeString, String unit) throws TimeParseException {
@@ -176,6 +184,56 @@ public class TimeParser {
         }
 
         return magnitude * unitMultiplier;
+    }
+
+    public static String format(long remaining) {
+        int days = toDays(remaining);
+        int hours = toHours(remaining);
+        int minutes = toMinutes(remaining);
+        int seconds = toSeconds(remaining);
+        StringBuilder builder = new StringBuilder();
+        // Add days if it's not 0
+        if (days != 0) {
+            builder.append(days).append(APPEND_DAYS);
+            if (hours != 0 && SPACE_AFTER_APPEND) {
+                builder.append(" ");
+            }
+        }
+        // Add hours if it's not 0
+        if (hours != 0) {
+            builder.append(hours).append(APPEND_HOURS);
+            if (minutes != 0 && SPACE_AFTER_APPEND) {
+                builder.append(" ");
+            }
+        }
+        // Add minutes if it's not 0
+        if (minutes != 0) {
+            builder.append(minutes).append(APPEND_MINUTES);
+            if (seconds != 0 && SPACE_AFTER_APPEND) {
+                builder.append(" ");
+            }
+        }
+        // Add seconds if it's not 0
+        if (seconds != 0) {
+            builder.append(seconds).append(APPEND_SECONDS);
+        }
+        return builder.toString();
+    }
+
+    private static int toDays(long remaining) {
+        return (int) (remaining / DAYS_IN_SECOND);
+    }
+
+    private static int toHours(long remaining) {
+        return (int) ((remaining % DAYS_IN_SECOND) / 3600);
+    }
+
+    private static int toMinutes(long remaining) {
+        return (int) (((remaining % DAYS_IN_SECOND) % 3600) / 60);
+    }
+
+    private static int toSeconds(long remaining) {
+        return (int) (((remaining % DAYS_IN_SECOND) % 3600) % 60);
     }
 
     public static class TimeParseException extends RuntimeException {

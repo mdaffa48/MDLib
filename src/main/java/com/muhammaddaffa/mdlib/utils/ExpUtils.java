@@ -2,7 +2,7 @@ package com.muhammaddaffa.mdlib.utils;
 
 import org.bukkit.entity.Player;
 
-public class SetExpFix {
+public class ExpUtils {
 
     //This method is used to update both the recorded total experience and displayed total experience.
     //We reset both types to prevent issues.

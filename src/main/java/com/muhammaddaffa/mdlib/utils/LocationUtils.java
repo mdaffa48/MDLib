@@ -4,7 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 
-public class LocationSerializer {
+public class LocationUtils {
 
     public static String serialize(Location location) {
         return location.getX() + ";" +

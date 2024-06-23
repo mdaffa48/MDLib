@@ -1,6 +1,6 @@
 package com.muhammaddaffa.mdlib;
 
-import com.muhammaddaffa.mdlib.gui.SimpleInventory;
+import com.jeff_media.customblockdata.CustomBlockData;
 import com.muhammaddaffa.mdlib.gui.SimpleInventoryManager;
 import com.muhammaddaffa.mdlib.hooks.VaultEconomy;
 import com.muhammaddaffa.mdlib.worldguards.listeners.RegionListener;
@@ -16,6 +16,8 @@ public final class MDLib {
 
     public static boolean VERBOSE_OUTPUT = false;
     public static boolean SILENT_LOGS = true;
+    public static boolean LISTEN_WORLDGUARD = false;
+    public static boolean CUSTOM_BLOCK_DATA = false;
 
     private static boolean PLACEHOLDER_API, VAULT, WORLD_GUARD;
 
@@ -56,7 +58,7 @@ public final class MDLib {
     private static void registerListeners() {
         PluginManager pm = Bukkit.getPluginManager();
         // Register events
-        if (usingWorldGuard()) {
+        if (usingWorldGuard() && LISTEN_WORLDGUARD) {
             pm.registerEvents(new RegionListener(), instance);
         }
 
@@ -65,23 +67,36 @@ public final class MDLib {
             VaultEconomy.init();
         }
 
+        // Custom block data
+        if (CUSTOM_BLOCK_DATA) {
+            CustomBlockData.registerListener(instance);
+        }
+
         // Register the gui library
         SimpleInventoryManager.register(instance);
     }
 
-    public static boolean usingWorldGuard() {
+    private static boolean usingWorldGuard() {
         return WORLD_GUARD;
     }
 
-    public static boolean usingPlaceholderAPI() {
+    private static boolean usingPlaceholderAPI() {
         return PLACEHOLDER_API;
     }
 
-    public static boolean usingVault() {
+    private static boolean usingVault() {
         return VAULT;
     }
 
-    public static JavaPlugin getInstance() {
+    public static void registerWorldGuard() {
+        LISTEN_WORLDGUARD = true;
+    }
+
+    public static void registerCustomBlockData() {
+        CUSTOM_BLOCK_DATA = true;
+    }
+
+    public static JavaPlugin instance() {
         return instance;
     }
 

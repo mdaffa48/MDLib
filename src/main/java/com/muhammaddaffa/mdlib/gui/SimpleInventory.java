@@ -1,7 +1,10 @@
 package com.muhammaddaffa.mdlib.gui;
 
+import com.muhammaddaffa.mdlib.utils.Common;
+import com.muhammaddaffa.mdlib.utils.Config;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -17,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
@@ -44,7 +48,7 @@ public class SimpleInventory implements InventoryHolder {
      * @param size The size of the inventory.
      */
     public SimpleInventory(int size) {
-        this(size, InventoryType.CHEST.getDefaultTitle());
+        this(owner -> Bukkit.createInventory(owner, size));
     }
 
     /**
@@ -54,7 +58,7 @@ public class SimpleInventory implements InventoryHolder {
      * @param title The title (name) of the inventory.
      */
     public SimpleInventory(int size, String title) {
-        this(size, InventoryType.CHEST, title);
+        this(owner -> Bukkit.createInventory(owner, size, Common.color(title)));
     }
 
     /**
@@ -63,7 +67,7 @@ public class SimpleInventory implements InventoryHolder {
      * @param type The type of the inventory.
      */
     public SimpleInventory(InventoryType type) {
-        this(Objects.requireNonNull(type, "type"), type.getDefaultTitle());
+        this(owner -> Bukkit.createInventory(owner, type));
     }
 
     /**
@@ -73,7 +77,15 @@ public class SimpleInventory implements InventoryHolder {
      * @param title The title of the inventory.
      */
     public SimpleInventory(InventoryType type, String title) {
-        this(0, Objects.requireNonNull(type, "type"), title);
+        this(owner -> Bukkit.createInventory(owner, type, Common.color(title)));
+    }
+
+    public SimpleInventory(Config config, String sizePath, String titlePath) {
+        this(config.getConfig(), sizePath, titlePath);
+    }
+
+    public SimpleInventory(FileConfiguration config, String sizePath, String titlePath) {
+        this(config.getInt(sizePath, 9), config.getString(titlePath, "Chest"));
     }
 
     private SimpleInventory(int size, InventoryType type, String title) {
@@ -86,6 +98,17 @@ public class SimpleInventory implements InventoryHolder {
         if (this.inventory.getHolder() != this) {
             throw new IllegalStateException("Inventory holder is not FastInv, found: " + this.inventory.getHolder());
         }
+    }
+
+    public SimpleInventory(Function<InventoryHolder, Inventory> inventoryFunction) {
+        Objects.requireNonNull(inventoryFunction, "inventoryFunction");
+        Inventory inv = inventoryFunction.apply(this);
+
+        if (inv.getHolder() == null || !inv.getHolder().equals(this)) {
+            throw new IllegalStateException("Inventory holder is not FastInv, found: " + inv.getHolder());
+        }
+
+        this.inventory = inv;
     }
 
     protected void onOpen(InventoryOpenEvent event) {
@@ -316,7 +339,8 @@ public class SimpleInventory implements InventoryHolder {
      */
     public int[] getBorders() {
         int size = this.inventory.getSize();
-        return IntStream.range(0, size).filter(i -> size < 27 || i < 9 || i % 9 == 0 || (i - 8) % 9 == 0 || i > size - 9).toArray();
+        return IntStream.range(0, size).filter(i -> size < 27 || i < 9
+                || i % 9 == 0 || (i - 8) % 9 == 0 || i > size - 9).toArray();
     }
 
     /**
@@ -326,7 +350,9 @@ public class SimpleInventory implements InventoryHolder {
      */
     public int[] getCorners() {
         int size = this.inventory.getSize();
-        return IntStream.range(0, size).filter(i -> i < 2 || (i > 6 && i < 10) || i == 17 || i == size - 18 || (i > size - 11 && i < size - 7) || i > size - 3).toArray();
+        return IntStream.range(0, size).filter(i -> i < 2 || (i > 6 && i < 10)
+                || i == 17 || i == size - 18
+                || (i > size - 11 && i < size - 7) || i > size - 3).toArray();
     }
 
     /**
