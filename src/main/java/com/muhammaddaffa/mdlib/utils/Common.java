@@ -235,7 +235,7 @@ public class Common {
     }
 
     public static String papi(Player player, String message) {
-        if (!MDLib.usingPlaceholderAPI()) {
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") == null) {
             return message;
         }
         return PlaceholderAPI.setPlaceholders(player, message);
