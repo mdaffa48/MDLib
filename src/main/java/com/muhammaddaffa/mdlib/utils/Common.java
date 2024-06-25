@@ -1,23 +1,18 @@
 package com.muhammaddaffa.mdlib.utils;
 
-import com.muhammaddaffa.mdlib.MDLib;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.DecimalFormat;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -40,38 +35,6 @@ public class Common {
             return true;
         } catch (IndexOutOfBoundsException ex) {
             return false;
-        }
-    }
-
-    @Deprecated
-    public static void configBroadcast(String configName, String path) {
-        configBroadcast(configName, path, null);
-    }
-
-    @Deprecated
-    public static void configBroadcast(String configName, String path, @Nullable Placeholder placeholder) {
-        Config config = Config.getConfig(configName);
-        if (config == null) {
-            Logger.warning("Trying to send config broadcast from invalid config (" + configName + ") with path '" + path + "'");
-            return;
-        }
-        configBroadcast(config, path, placeholder);
-    }
-
-    @Deprecated
-    public static void configBroadcast(@NotNull Config config, String path) {
-        configBroadcast(config, path, null);
-    }
-
-    @Deprecated
-    public static void configBroadcast(@NotNull Config config, String path, @Nullable Placeholder placeholder) {
-        FileConfiguration fileConfiguration = config.getConfig();
-        if (fileConfiguration.isList(path)) {
-            for (String message : fileConfiguration.getStringList(path)) {
-                broadcast(message, placeholder);
-            }
-        } else {
-            broadcast(fileConfiguration.getString(path), placeholder);
         }
     }
 
@@ -151,38 +114,6 @@ public class Common {
             player.getInventory().addItem(stack).forEach((integer, item) -> {
                 player.getWorld().dropItemNaturally(player.getLocation(), stack);
             });
-        }
-    }
-
-    @Deprecated
-    public static void configMessage(String configName, CommandSender sender, String path) {
-        configMessage(configName, sender, path, null);
-    }
-
-    @Deprecated
-    public static void configMessage(String configName, CommandSender sender, String path, @Nullable Placeholder placeholder) {
-        Config config = Config.getConfig(configName);
-        if (config == null) {
-            Logger.warning("Trying to send config message from invalid config (" + configName + ") with path '" + path + "'");
-            return;
-        }
-        configMessage(config, sender, path, placeholder);
-    }
-
-    @Deprecated
-    public static void configMessage(@NotNull Config config, CommandSender sender, String path) {
-        configMessage(config, sender, path, null);
-    }
-
-    @Deprecated
-    public static void configMessage(@NotNull Config config, CommandSender sender, String path, @Nullable Placeholder placeholder) {
-        FileConfiguration fileConfiguration = config.getConfig();
-        if (fileConfiguration.isList(path)) {
-            for (String message : fileConfiguration.getStringList(path)) {
-                sendMessage(sender, message, placeholder);
-            }
-        } else {
-            sendMessage(sender, fileConfiguration.getString(path), placeholder);
         }
     }
 

@@ -20,26 +20,8 @@ public class Config {
 
     private static final Map<String, Config> configMap = new HashMap<>();
 
-    public static void registerConfig(String configName, String directory, boolean shouldReload) {
-        Config.registerConfig(new Config(configName, directory, shouldReload));
-    }
-
-    public static void registerConfig(Config config) {
-        configMap.put(config.getConfigName(), config);
-    }
-
-    @Nullable
-    public static Config getConfig(String configName) {
-        return configMap.get(configName);
-    }
-
-    @Nullable
-    public static FileConfiguration getFileConfiguration(String configName) {
-        Config config = getConfig(configName);
-        if (config == null) {
-            return null;
-        }
-        return config.getConfig();
+    private static void registerConfig(Config config) {
+        configMap.put(config.getFile().getPath(), config);
     }
 
     public static void reload() {
@@ -132,6 +114,10 @@ public class Config {
 
     public boolean isShouldReload() {
         return shouldReload;
+    }
+
+    public File getFile() {
+        return file;
     }
 
     public FileConfiguration getConfig() {
