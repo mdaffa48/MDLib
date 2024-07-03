@@ -6,7 +6,7 @@
 
     <groupId>com.muhammaddaffa</groupId>
     <artifactId>MDLib</artifactId>
-    <version>3.0.0</version>
+    <version>3.0.1</version>
 
     <name>MDLib</name>
 
@@ -194,7 +194,7 @@
         <dependency>
             <groupId>com.github.cryptomorin</groupId>
             <artifactId>XSeries</artifactId>
-            <version>11.1.0</version>
+            <version>11.2.0</version>
         </dependency>
         <!-- ConfigUpdater -->
         <dependency>
