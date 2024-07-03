@@ -200,7 +200,7 @@ public class ItemBuilder {
     }
 
     public ItemBuilder skull(String identifier){
-        ProfileInputType input = ProfileInputType.get(identifier);
+        ProfileInputType input = ProfileInputType.typeOf(identifier);
         if (input != null)
             XSkull.of(this.meta).profile(Profileable.of(input, identifier)).apply();
         return this;
