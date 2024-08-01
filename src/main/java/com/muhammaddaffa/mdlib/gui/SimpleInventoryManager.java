@@ -47,9 +47,11 @@ public final class SimpleInventoryManager {
      * Close all open SimpleInventory inventories.
      */
     public static void closeAll() {
-        Bukkit.getOnlinePlayers().stream()
-                .filter(p -> p.getOpenInventory().getTopInventory().getHolder() instanceof SimpleInventory)
-                .forEach(Player::closeInventory);
+        try {
+            Bukkit.getOnlinePlayers().stream()
+                    .filter(p -> p.getOpenInventory().getTopInventory().getHolder() instanceof SimpleInventory)
+                    .forEach(Player::closeInventory);
+        } catch (Exception ignored) {}
     }
 
     public static final class InventoryListener implements Listener {
