@@ -18,6 +18,7 @@ public final class MDLib {
     public static boolean SILENT_LOGS = true;
     public static boolean LISTEN_WORLDGUARD = false;
     public static boolean CUSTOM_BLOCK_DATA = false;
+    public static boolean COMMANDAPI = true;
 
     private static boolean PLACEHOLDER_API, VAULT, WORLD_GUARD;
 
@@ -26,9 +27,11 @@ public final class MDLib {
      */
     public static void inject(JavaPlugin plugin) {
         // load the command api
-        CommandAPI.onLoad(new CommandAPIBukkitConfig(plugin)
-                .verboseOutput(VERBOSE_OUTPUT)
-                .silentLogs(SILENT_LOGS));
+        if (COMMANDAPI) {
+            CommandAPI.onLoad(new CommandAPIBukkitConfig(plugin)
+                    .verboseOutput(VERBOSE_OUTPUT)
+                    .silentLogs(SILENT_LOGS));
+        }
     }
 
     /**
@@ -36,7 +39,9 @@ public final class MDLib {
      */
     public static void onEnable(JavaPlugin plugin) {
         // enable the command api
-        CommandAPI.onEnable();
+        if (COMMANDAPI) {
+            CommandAPI.onEnable();
+        }
         // initialize the instance
         instance = plugin;
         // check if server is using placeholderapi
@@ -52,7 +57,9 @@ public final class MDLib {
      * @return
      */
     public static void shutdown() {
-        CommandAPI.onDisable();
+        if (COMMANDAPI) {
+            CommandAPI.onDisable();
+        }
     }
 
     private static void registerListeners() {
