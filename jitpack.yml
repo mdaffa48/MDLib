@@ -1,0 +1,22 @@
+# jitpack.yml
+jdk:
+  - openjdk21
+
+# Maven build configuration
+env:
+  MAVEN_VERSION: "3.9.8"
+
+before_install:
+  # Install specific Maven version
+  - MAVEN_DOWNLOAD_URL="https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.zip"
+  - wget "${MAVEN_DOWNLOAD_URL}" -O /tmp/apache-maven-${MAVEN_VERSION}-bin.zip
+  - unzip /tmp/apache-maven-${MAVEN_VERSION}-bin.zip -d /tmp/
+  - export M2_HOME=/tmp/apache-maven-${MAVEN_VERSION}
+  - export PATH=$M2_HOME/bin:$PATH
+
+install:
+  - mvn -version
+
+# Build command
+script:
+  - mvn clean install -Dmaven.javadoc.skip=true -DskipTests
