@@ -6,6 +6,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -84,6 +85,50 @@ public class Common {
 
     public static String digits(Object o) {
         return decimalFormat.format(o);
+    }
+
+    public static String format(FileConfiguration config, double number) {
+        if (number >= 1_000_000_000_000_000_000_000_000.0) {
+            return decimalFormat.format(number / 1_000_000_000_000_000_000_000_000.0) + config.getString("currency-notation.septillion", "Sp");
+        } else if (number >= 1_000_000_000_000_000_000_000.0) {
+            return decimalFormat.format(number / 1_000_000_000_000_000_000_000.0) + config.getString("currency-notation.sextillion", "Sx");
+        } else if (number >= 1_000_000_000_000_000_000.0) {
+            return decimalFormat.format(number / 1_000_000_000_000_000_000.0) + config.getString("currency-notation.quintillion", "Qi");
+        } else if (number >= 1_000_000_000_000_000.0) {
+            return decimalFormat.format(number / 1_000_000_000_000_000.0) + config.getString("currency-notation.quadrillion", "Qa");
+        } else if (number >= 1_000_000_000_000.0) {
+            return decimalFormat.format(number / 1_000_000_000_000.0) + config.getString("currency-notation.trillion", "T");
+        } else if (number >= 1_000_000_000.0) {
+            return decimalFormat.format(number / 1_000_000_000.0) + config.getString("currency-notation.billion", "B");
+        } else if (number >= 1_000_000.0) {
+            return decimalFormat.format(number / 1_000_000.0) + config.getString("currency-notation.million", "M");
+        } else if (number >= 1_000.0) {
+            return decimalFormat.format(number / 1_000.0) + config.getString("currency-notation.thousand", "K");
+        } else {
+            return decimalFormat.format(number);
+        }
+    }
+
+    public static String format(double number) {
+        if (number >= 1_000_000_000_000_000_000_000_000.0) {
+            return decimalFormat.format(number / 1_000_000_000_000_000_000_000_000.0) + "Sp";
+        } else if (number >= 1_000_000_000_000_000_000_000.0) {
+            return decimalFormat.format(number / 1_000_000_000_000_000_000_000.0) + "Sx";
+        } else if (number >= 1_000_000_000_000_000_000.0) {
+            return decimalFormat.format(number / 1_000_000_000_000_000_000.0) + "Qi";
+        } else if (number >= 1_000_000_000_000_000.0) {
+            return decimalFormat.format(number / 1_000_000_000_000_000.0) + "Qa";
+        } else if (number >= 1_000_000_000_000.0) {
+            return decimalFormat.format(number / 1_000_000_000_000.0) + "T";
+        } else if (number >= 1_000_000_000.0) {
+            return decimalFormat.format(number / 1_000_000_000.0) + "B";
+        } else if (number >= 1_000_000.0) {
+            return decimalFormat.format(number / 1_000_000.0) + "M";
+        } else if (number >= 1_000.0) {
+            return decimalFormat.format(number / 1_000.0) + "K";
+        } else {
+            return decimalFormat.format(number);
+        }
     }
 
     public static boolean isDouble(String s) {
