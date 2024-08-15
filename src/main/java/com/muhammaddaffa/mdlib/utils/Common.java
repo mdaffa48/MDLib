@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 public class Common {
 
+    private static final Pattern HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})");
     private static final DecimalFormat decimalFormat = new DecimalFormat("###,###,###,###,###.##");
 
     public static double getRandomNumberBetween(double min, double max) {
@@ -146,23 +147,23 @@ public class Common {
         return messages.stream().map(Common::color).collect(Collectors.toList());
     }
 
-    public static String color(String message) {
-        Pattern pattern = Pattern.compile("#[a-fA-F0-9]{6}");
-        Matcher matcher = pattern.matcher(message);
+    public static String color(final String message) {
+        final char colorChar = ChatColor.COLOR_CHAR;
+
+        final Matcher matcher = HEX_PATTERN.matcher(message);
+        final StringBuilder buffer = new StringBuilder(message.length() + 4 * 8);
+
         while (matcher.find()) {
-            String hexCode = message.substring(matcher.start(), matcher.end());
-            String replaceSharp = hexCode.replace('#', 'x');
+            final String group = matcher.group(1);
 
-            char[] ch = replaceSharp.toCharArray();
-            StringBuilder builder = new StringBuilder("");
-            for (char c : ch) {
-                builder.append("&" + c);
-            }
-
-            message = message.replace(hexCode, builder.toString());
-            matcher = pattern.matcher(message);
+            matcher.appendReplacement(buffer, colorChar + "x"
+                    + colorChar + group.charAt(0) + colorChar + group.charAt(1)
+                    + colorChar + group.charAt(2) + colorChar + group.charAt(3)
+                    + colorChar + group.charAt(4) + colorChar + group.charAt(5));
         }
-        return ChatColor.translateAlternateColorCodes('&', message);
+
+        String result = matcher.appendTail(buffer).toString();
+        return ChatColor.translateAlternateColorCodes('&', result);
     }
 
     public static String papi(Player player, String message) {
