@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 public class Common {
 
-    private static final Pattern HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})");
+    private static final Pattern HEX_PATTERN = Pattern.compile("(?:&#|#)([A-Fa-f0-9]{6})");
     private static final DecimalFormat decimalFormat = new DecimalFormat("###,###,###,###,###.##");
 
     public static double getRandomNumberBetween(double min, double max) {
