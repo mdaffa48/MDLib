@@ -185,7 +185,16 @@ public class Common {
         if (placeholder != null) {
             message = placeholder.translate(message);
         }
-        sender.sendMessage(color(message));
+        // Check if message starts with 'actionbar;'
+        if (sender instanceof Player player) {
+            if (message.startsWith("actionbar;")) {
+                Common.actionBar(player, color(message.replace("actionbar;", "")));
+            } else {
+                sender.sendMessage(color(message));
+            }
+        } else {
+            sender.sendMessage(color(message.replace("actionbar;", "")));
+        }
     }
 
     public static List<String> color(List<String> messages) {
