@@ -5,6 +5,7 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -12,7 +13,9 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.DecimalFormat;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -150,16 +153,33 @@ public class Common {
     }
 
     public static void addInventoryItem(Player player, ItemStack stack) {
-        player.getInventory().addItem(stack).forEach((integer, item) -> {
-            player.getWorld().dropItemNaturally(player.getLocation(), stack);
+        int amount = stack.getAmount();
+        Material material = stack.getType();
+        int maxStackSize = material.getMaxStackSize();
+
+        Map<Integer, ItemStack> leftovers = new HashMap<>();
+
+        while (amount > 0) {
+            int stackAmount = Math.min(amount, maxStackSize);
+            ItemStack stackToAdd = new ItemStack(material, stackAmount);
+
+            Map<Integer, ItemStack> left = player.getInventory().addItem(stackToAdd);
+            if (!left.isEmpty()) {
+                leftovers.putAll(left);
+            }
+
+            amount -= stackAmount;
+        }
+
+        // Drop any leftovers
+        leftovers.values().forEach(item -> {
+            player.getWorld().dropItemNaturally(player.getLocation(), item);
         });
     }
 
     public static void addInventoryItem(Player player, List<ItemStack> items) {
         for (ItemStack stack : items) {
-            player.getInventory().addItem(stack).forEach((integer, item) -> {
-                player.getWorld().dropItemNaturally(player.getLocation(), stack);
-            });
+            addInventoryItem(player, stack);
         }
     }
 
