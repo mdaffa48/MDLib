@@ -5,6 +5,7 @@ import com.muhammaddaffa.mdlib.hooks.VaultEconomy;
 import com.muhammaddaffa.mdlib.worldguards.listeners.RegionListener;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
+import fr.mrmicky.fastinv.FastInvManager;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -77,6 +78,9 @@ public final class MDLib {
         if (CUSTOM_BLOCK_DATA) {
             CustomBlockData.registerListener(instance);
         }
+
+        // FastInv
+        FastInvManager.register(instance);
     }
 
     private static boolean usingWorldGuard() {
