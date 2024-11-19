@@ -1,7 +1,6 @@
 package com.muhammaddaffa.mdlib;
 
 import com.jeff_media.customblockdata.CustomBlockData;
-import com.muhammaddaffa.mdlib.gui.SimpleInventoryManager;
 import com.muhammaddaffa.mdlib.hooks.VaultEconomy;
 import com.muhammaddaffa.mdlib.worldguards.listeners.RegionListener;
 import dev.jorel.commandapi.CommandAPI;
@@ -78,9 +77,6 @@ public final class MDLib {
         if (CUSTOM_BLOCK_DATA) {
             CustomBlockData.registerListener(instance);
         }
-
-        // Register the gui library
-        SimpleInventoryManager.register(instance);
     }
 
     private static boolean usingWorldGuard() {
