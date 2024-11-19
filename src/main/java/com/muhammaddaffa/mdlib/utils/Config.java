@@ -1,6 +1,7 @@
 package com.muhammaddaffa.mdlib.utils;
 
 import com.muhammaddaffa.mdlib.MDLib;
+import com.tchristofferson.configupdater.ConfigUpdater;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,13 +33,31 @@ public class Config {
         }
     }
 
+    public static void updateConfigs() {
+        for (Config config : configMap.values()) {
+            if (!config.isShouldUpdate()) {
+                continue;
+            }
+            // Get the config file
+            try {
+                ConfigUpdater.update(MDLib.instance(), config.getFile().getName(), config.getFile());
+            } catch(Exception ex) {
+                Logger.severe("Failed to update the " + config.getFile().getName());
+                ex.printStackTrace();
+            }
+        }
+    }
+
     // -----------------------------------------------------------
 
     private final File file;
     private FileConfiguration config;
 
     private final String configName;
-    private boolean shouldReload = false;
+    private boolean shouldReload;
+
+    private boolean shouldUpdate;
+    private final List<String> ignored = new ArrayList<>();
 
     public Config(String configName, String directory, boolean shouldReload) {
         JavaPlugin plugin = MDLib.instance();
@@ -72,6 +92,18 @@ public class Config {
         this.config = YamlConfiguration.loadConfiguration(file);
         // Register the config
         Config.registerConfig(this);
+    }
+
+    public boolean isShouldUpdate() {
+        return shouldUpdate;
+    }
+
+    public void setShouldUpdate(boolean shouldUpdate) {
+        this.shouldUpdate = shouldUpdate;
+    }
+
+    public void addIgnored(String ignoredPath) {
+        this.ignored.add(ignoredPath);
     }
 
     public void broadcast(String path) {
