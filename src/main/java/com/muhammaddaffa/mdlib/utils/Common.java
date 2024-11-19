@@ -157,13 +157,18 @@ public class Common {
         Material material = stack.getType();
         int maxStackSize = material.getMaxStackSize();
 
+        // Clone the original stack to retain ItemMeta and other properties
+        ItemStack originalStack = stack.clone();
+
         Map<Integer, ItemStack> leftovers = new HashMap<>();
 
         while (amount > 0) {
+            // Determine the number of items for this part of the stack
             int stackAmount = Math.min(amount, maxStackSize);
-            ItemStack stackToAdd = new ItemStack(material, stackAmount);
+            originalStack.setAmount(stackAmount);
 
-            Map<Integer, ItemStack> left = player.getInventory().addItem(stackToAdd);
+            // Try to add the items to the player's inventory
+            Map<Integer, ItemStack> left = player.getInventory().addItem(originalStack);
             if (!left.isEmpty()) {
                 leftovers.putAll(left);
             }
