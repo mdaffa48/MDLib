@@ -50,7 +50,7 @@ public final class MDLib {
         instance = plugin;
         // check if server is using placeholderapi
         PLACEHOLDER_API = Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null;
-        VAULT = Bukkit.getPluginManager().getPlugin("VAULT") != null;
+        VAULT = Bukkit.getPluginManager().getPlugin("Vault") != null;
         WORLD_GUARD = Bukkit.getPluginManager().getPlugin("WorldGuard") != null;
         // Register the listeners
         registerListeners();
