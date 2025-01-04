@@ -1,11 +1,17 @@
 package com.muhammaddaffa.mdlib.utils;
 
+import com.cryptomorin.xseries.XSound;
 import me.clip.placeholderapi.PlaceholderAPI;
+import net.kyori.adventure.Adventure;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -16,6 +22,7 @@ import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,6 +32,8 @@ public class Common {
 
     private static final Pattern HEX_PATTERN = Pattern.compile("(?:&#|#)([A-Fa-f0-9]{6})");
     private static final DecimalFormat decimalFormat = new DecimalFormat("###,###,###,###,###.##");
+
+    private static final MiniMessage miniMessage = MiniMessage.miniMessage();
 
     public static double getRandomNumberBetween(double min, double max) {
         return ThreadLocalRandom.current().nextDouble(max - min) + min;
@@ -41,6 +50,19 @@ public class Common {
         } catch (IndexOutOfBoundsException ex) {
             return false;
         }
+    }
+
+    public static void playSound(Player player, Sound sound) {
+        playSound(player, XSound.of(sound));
+    }
+
+    public static void playSound(Player player, String sound) {
+        Optional<XSound> optional = XSound.of(sound);
+        optional.ifPresent(xSound -> playSound(player, xSound));
+    }
+
+    public static void playSound(Player player, XSound sound) {
+        sound.play(player, 1.0f, 1.0f);
     }
 
     public static void broadcast(String message) {
@@ -229,8 +251,22 @@ public class Common {
     public static String color(final String message) {
         final char colorChar = ChatColor.COLOR_CHAR;
 
-        final Matcher matcher = HEX_PATTERN.matcher(message);
-        final StringBuilder buffer = new StringBuilder(message.length() + 4 * 8);
+        // Step 1: If Paper server, process MiniMessage formatting
+        String result = message;
+        if (isPaperServer()) {
+            MiniMessage miniMessage = MiniMessage.miniMessage();
+            LegacyComponentSerializer legacySerializer = LegacyComponentSerializer.legacySection();
+
+            // Parse MiniMessage into a Component
+            Component component = miniMessage.deserialize(message);
+
+            // Serialize Component into a legacy-compatible string
+            result = legacySerializer.serialize(component);
+        }
+
+        // Step 2: Handle legacy hex codes
+        final Matcher matcher = HEX_PATTERN.matcher(result);
+        final StringBuilder buffer = new StringBuilder(result.length() + 4 * 8);
 
         while (matcher.find()) {
             final String group = matcher.group(1);
@@ -241,8 +277,9 @@ public class Common {
                     + colorChar + group.charAt(4) + colorChar + group.charAt(5));
         }
 
-        String result = matcher.appendTail(buffer).toString();
-        return ChatColor.translateAlternateColorCodes('&', result);
+        // Step 3: Apply legacy formatting codes
+        String legacyFormatted = matcher.appendTail(buffer).toString();
+        return ChatColor.translateAlternateColorCodes('&', legacyFormatted);
     }
 
     public static String papi(Player player, String message) {
@@ -250,6 +287,15 @@ public class Common {
             return message;
         }
         return PlaceholderAPI.setPlaceholders(player, message);
+    }
+
+    private static boolean isPaperServer() {
+        try {
+            Class.forName("com.destroystokyo.paper.PaperConfig");
+            return true; // Paper-specific class found
+        } catch (ClassNotFoundException e) {
+            return false; // Class not found, likely a Spigot server
+        }
     }
 
 }

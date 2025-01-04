@@ -10,6 +10,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -224,6 +225,41 @@ public class ItemBuilder {
         return this;
     }
 
+    public ItemBuilder attribute(Material material, EquipmentSlot slot) {
+        this.meta.setAttributeModifiers(material.getDefaultAttributeModifiers(slot));
+        return this;
+    }
+
+    public ItemBuilder loreCustom(String key, String replacer) {
+        return loreCustom(key, replacer, null);
+    }
+
+    public ItemBuilder loreCustom(String key, String replacer, @Nullable Placeholder placeholder) {
+        return loreCustom(key, List.of(replacer), placeholder);
+    }
+
+    public ItemBuilder loreCustom(String key, List<String> replacer) {
+        return loreCustom(key, replacer, null);
+    }
+
+    public ItemBuilder loreCustom(String key, List<String> replacer, @Nullable Placeholder placeholder) {
+        List<String> lore = new ArrayList<>();
+        // Check if the placeholder is not null
+        if (placeholder != null) replacer = placeholder.translate(replacer);
+        // Get the lore
+        if (meta != null && meta.getLore() != null) {
+            for (String line : meta.getLore()) {
+                if (line.contains(key)) {
+                    lore.addAll(replacer);
+                    continue;
+                }
+                lore.add(line);
+            }
+        }
+        this.lore(lore);
+        return this;
+    }
+
     @Nullable
     public static ItemBuilder fromConfig(Config config, String path) {
         return fromConfig(config, path, null);
@@ -260,6 +296,7 @@ public class ItemBuilder {
         }
         // get all the available variables
         String materialString = section.getString("material");
+        if (materialString == null) materialString = "BARRIER";
         if (placeholder != null) materialString = placeholder.translate(materialString);
         Integer cmd = section.get("custom-model-data") == null ? null : section.getInt("custom-model-data");
         int amount = section.getInt("amount");
@@ -267,6 +304,11 @@ public class ItemBuilder {
         List<String> lore = section.getStringList("lore");
         List<String> flags = section.getStringList("flags");
         List<String> enchantments = section.getStringList("enchantments");
+
+        // Parse the placeholder on the material
+        if (placeholder != null) {
+            materialString = placeholder.translate(materialString);
+        }
 
         // start building the itemstack
         ItemBuilder builder;
@@ -295,9 +337,9 @@ public class ItemBuilder {
         builder.lore(lore);
         // set the item flag
         for (String flag : flags) {
-            try {
+            if (isValidItemFlag(flag)) {
                 builder.flags(ItemFlag.valueOf(flag));
-            } catch (IllegalArgumentException ignored) { }
+            }
         }
         // enchantments
         for (String enchantment : enchantments) {
@@ -320,9 +362,9 @@ public class ItemBuilder {
         return this.item;
     }
 
-    private boolean isValidItemFlag(String flag) {
+    private static boolean isValidItemFlag(String flag) {
         try {
-            ItemFlag.valueOf(flag);
+            ItemFlag.valueOf(flag.toUpperCase());
             return true;
         } catch (IllegalArgumentException ex) {
             return false;

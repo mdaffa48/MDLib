@@ -6,7 +6,7 @@
 
     <groupId>com.muhammaddaffa</groupId>
     <artifactId>MDLib</artifactId>
-    <version>2.0.6</version>
+    <version>2.0.7</version>
 
     <name>MDLib</name>
 
@@ -81,7 +81,6 @@
                                 <exclude>com/cryptomorin/xseries/XEntity*</exclude>
                                 <exclude>com/cryptomorin/xseries/XItemStack*</exclude>
                                 <exclude>com/cryptomorin/xseries/XPotion*</exclude>
-                                <exclude>com/cryptomorin/xseries/XSound*</exclude>
                                 <exclude>com/cryptomorin/xseries/XTag*</exclude>
                                 <exclude>com/cryptomorin/xseries/messages/ActionBar*</exclude>
                                 <exclude>com/cryptomorin/xseries/messages/Titles*</exclude>
@@ -150,7 +149,7 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.21.3-R0.1-SNAPSHOT</version>
+            <version>1.21.4-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <!-- Vault -->
@@ -204,7 +203,7 @@
         <dependency>
             <groupId>com.github.cryptomorin</groupId>
             <artifactId>XSeries</artifactId>
-            <version>11.3.0</version>
+            <version>13.0.0</version>
         </dependency>
         <!-- ConfigUpdater -->
         <dependency>
@@ -216,7 +215,7 @@
         <dependency>
             <groupId>dev.jorel</groupId>
             <artifactId>commandapi-bukkit-shade</artifactId>
-            <version>9.6.0</version>
+            <version>9.7.0</version>
         </dependency>
         <!-- Mojang Authlib -->
         <dependency>
@@ -224,6 +223,12 @@
             <artifactId>authlib</artifactId>
             <version>6.0.54</version>
             <scope>provided</scope>
+        </dependency>
+        <!-- MiniMessage -->
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-minimessage</artifactId>
+            <version>4.18.0</version>
         </dependency>
         <!-- IntelliJ Annotations -->
         <dependency>
