@@ -2,7 +2,6 @@ package com.muhammaddaffa.mdlib.utils;
 
 import com.cryptomorin.xseries.XSound;
 import me.clip.placeholderapi.PlaceholderAPI;
-import net.kyori.adventure.Adventure;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -32,8 +31,6 @@ public class Common {
 
     private static final Pattern HEX_PATTERN = Pattern.compile("(?:&#|#)([A-Fa-f0-9]{6})");
     private static final DecimalFormat decimalFormat = new DecimalFormat("###,###,###,###,###.##");
-
-    private static final MiniMessage miniMessage = MiniMessage.miniMessage();
 
     public static double getRandomNumberBetween(double min, double max) {
         return ThreadLocalRandom.current().nextDouble(max - min) + min;
@@ -253,7 +250,7 @@ public class Common {
 
         // Step 1: If Paper server, process MiniMessage formatting
         String result = message;
-        if (isPaperServer()) {
+        if (isPaperServer() && isAdventurePresent()) {
             MiniMessage miniMessage = MiniMessage.miniMessage();
             LegacyComponentSerializer legacySerializer = LegacyComponentSerializer.legacySection();
 
@@ -295,6 +292,15 @@ public class Common {
             return true; // Paper-specific class found
         } catch (ClassNotFoundException e) {
             return false; // Class not found, likely a Spigot server
+        }
+    }
+
+    private static boolean isAdventurePresent() {
+        try {
+            Class.forName("net.kyori.adventure.text.minimessage.MiniMessage");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
         }
     }
 
