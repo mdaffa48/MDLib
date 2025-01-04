@@ -2,9 +2,6 @@ package com.muhammaddaffa.mdlib.utils;
 
 import com.cryptomorin.xseries.XSound;
 import me.clip.placeholderapi.PlaceholderAPI;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -248,22 +245,8 @@ public class Common {
     public static String color(final String message) {
         final char colorChar = ChatColor.COLOR_CHAR;
 
-        // Step 1: If Paper server, process MiniMessage formatting
-        String result = message;
-        if (isPaperServer() && isAdventurePresent()) {
-            MiniMessage miniMessage = MiniMessage.miniMessage();
-            LegacyComponentSerializer legacySerializer = LegacyComponentSerializer.legacySection();
-
-            // Parse MiniMessage into a Component
-            Component component = miniMessage.deserialize(message);
-
-            // Serialize Component into a legacy-compatible string
-            result = legacySerializer.serialize(component);
-        }
-
-        // Step 2: Handle legacy hex codes
-        final Matcher matcher = HEX_PATTERN.matcher(result);
-        final StringBuilder buffer = new StringBuilder(result.length() + 4 * 8);
+        final Matcher matcher = HEX_PATTERN.matcher(message);
+        final StringBuilder buffer = new StringBuilder(message.length() + 4 * 8);
 
         while (matcher.find()) {
             final String group = matcher.group(1);
@@ -284,24 +267,6 @@ public class Common {
             return message;
         }
         return PlaceholderAPI.setPlaceholders(player, message);
-    }
-
-    private static boolean isPaperServer() {
-        try {
-            Class.forName("com.destroystokyo.paper.PaperConfig");
-            return true; // Paper-specific class found
-        } catch (ClassNotFoundException e) {
-            return false; // Class not found, likely a Spigot server
-        }
-    }
-
-    private static boolean isAdventurePresent() {
-        try {
-            Class.forName("net.kyori.adventure.text.minimessage.MiniMessage");
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
     }
 
 }
