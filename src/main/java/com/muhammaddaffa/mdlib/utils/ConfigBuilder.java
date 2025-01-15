@@ -4,24 +4,24 @@ public class ConfigBuilder {
 
     private final String configName;
     private String directory;
-    private boolean shouldReload;
-    private boolean shouldAutoUpdate;
+    private boolean shouldReload = true;
+    private boolean shouldAutoUpdate = false;
 
     public ConfigBuilder(String configName) {
         this.configName = configName;
     }
 
-    public ConfigBuilder directory(String directory) {
+    public ConfigBuilder setDirectory(String directory) {
         this.directory = directory;
         return this;
     }
 
-    public ConfigBuilder shouldReload(boolean shouldReload) {
+    public ConfigBuilder setShouldReload(boolean shouldReload) {
         this.shouldReload = shouldReload;
         return this;
     }
 
-    public ConfigBuilder shouldAutoUpdate(boolean shouldAutoUpdate) {
+    public ConfigBuilder setShouldAutoUpdate(boolean shouldAutoUpdate) {
         this.shouldAutoUpdate = shouldAutoUpdate;
         return this;
     }
