@@ -15,6 +15,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Nullable;
 
@@ -352,6 +353,23 @@ public class ItemBuilder {
         // set the placeholder
         if (placeholder != null) {
             builder.placeholder(placeholder);
+        }
+
+        // Try to get the color
+        if (section.get("color") != null) {
+            int r = section.getInt("color.r", 255);
+            int g = section.getInt("color.g", 255);
+            int b = section.getInt("color.b", 255);
+            // Create a color object
+            Color color = Color.fromRGB(r, g, b);
+            // If the item is a tipped arrow, apply it
+            builder.meta(PotionMeta.class, meta -> {
+                meta.setColor(color);
+            });
+            // If the item is a leather armor meta
+            builder.meta(LeatherArmorMeta.class, meta -> {
+                meta.setColor(color);
+            });
         }
 
         return builder;
