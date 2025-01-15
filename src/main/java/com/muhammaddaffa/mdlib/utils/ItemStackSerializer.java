@@ -13,13 +13,46 @@ import java.io.ByteArrayOutputStream;
 
 public class ItemStackSerializer {
 
+    @Nullable
+    public static ItemStack readItem(String source) {
+        try {
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64Coder.decode(source));
+            BukkitObjectInputStream dataInput = new BukkitObjectInputStream(inputStream);
+            ItemStack item;
+
+            // Read the serialized inventory
+            item = (ItemStack) dataInput.readObject();
+
+            dataInput.close();
+            return item;
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    public static String writeItem(ItemStack item) {
+        try {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            BukkitObjectOutputStream dataOutput = new BukkitObjectOutputStream(outputStream);
+
+            // Save every element
+            dataOutput.writeObject(item);
+
+            // Serialize that array
+            dataOutput.close();
+            return new String(Base64Coder.encode(outputStream.toByteArray()));
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable to save item stack.", e);
+        }
+    }
+
     /**
      * Serializes an array of ItemStacks into a Base64 string.
      *
      * @param items The array of ItemStacks to serialize.
      * @return A Base64 string representation of the items, or an empty string if an error occurs.
      */
-    public static String writeArray(ItemStack... items) {
+    public static String writeArray(ItemStack[] items) {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
              BukkitObjectOutputStream dataOutput = new BukkitObjectOutputStream(outputStream)) {
 
