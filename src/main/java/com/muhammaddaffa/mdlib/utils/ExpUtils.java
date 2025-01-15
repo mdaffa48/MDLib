@@ -4,6 +4,14 @@ import org.bukkit.entity.Player;
 
 public class ExpUtils {
 
+    public static void addTotalExperience(final Player player, final int amount) {
+        setTotalExperience(player, getTotalExperience(player) + amount);
+    }
+
+    public static void removeTotalExperience(final Player player, final int amount) {
+        setTotalExperience(player, getTotalExperience(player) - amount);
+    }
+
     //This method is used to update both the recorded total experience and displayed total experience.
     //We reset both types to prevent issues.
     public static void setTotalExperience(final Player player, final int exp) {
