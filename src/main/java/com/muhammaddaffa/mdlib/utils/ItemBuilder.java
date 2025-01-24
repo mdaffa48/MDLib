@@ -3,10 +3,8 @@ package com.muhammaddaffa.mdlib.utils;
 import com.cryptomorin.xseries.profiles.builder.XSkull;
 import com.cryptomorin.xseries.profiles.objects.ProfileInputType;
 import com.cryptomorin.xseries.profiles.objects.Profileable;
-import org.bukkit.Color;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.OfflinePlayer;
+import me.clip.placeholderapi.PlaceholderAPI;
+import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.enchantments.Enchantment;
@@ -311,6 +309,12 @@ public class ItemBuilder {
             materialString = placeholder.translate(materialString);
         }
 
+        if (isPlaceholderAPI()) {
+            materialString = PlaceholderAPI.setPlaceholders(null, materialString);
+            displayName = PlaceholderAPI.setPlaceholders(null, displayName);
+            lore = PlaceholderAPI.setPlaceholders(null, lore);
+        }
+
         // start building the itemstack
         ItemBuilder builder;
         if (materialString.contains(";")) {
@@ -378,6 +382,10 @@ public class ItemBuilder {
     public ItemStack build() {
         this.item.setItemMeta(this.meta);
         return this.item;
+    }
+
+    private static boolean isPlaceholderAPI() {
+        return Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI");
     }
 
     private static boolean isValidItemFlag(String flag) {
