@@ -294,8 +294,7 @@ public class ItemBuilder {
             return null;
         }
         // get all the available variables
-        String materialString = section.getString("material");
-        if (materialString == null) materialString = "BARRIER";
+        String materialString = section.getString("material", "BARRIER");
         if (placeholder != null) materialString = placeholder.translate(materialString);
         Integer cmd = section.get("custom-model-data") == null ? null : section.getInt("custom-model-data");
         int amount = section.getInt("amount");
@@ -311,7 +310,7 @@ public class ItemBuilder {
 
         if (isPlaceholderAPI()) {
             materialString = PlaceholderAPI.setPlaceholders(null, materialString);
-            displayName = PlaceholderAPI.setPlaceholders(null, displayName);
+            if (displayName != null) displayName = PlaceholderAPI.setPlaceholders(null, displayName);
             lore = PlaceholderAPI.setPlaceholders(null, lore);
         }
 
