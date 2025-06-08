@@ -9,12 +9,14 @@ import com.sk89q.worldguard.protection.regions.RegionContainer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class SimpleWorldGuardAPI {
 
@@ -98,14 +100,41 @@ public class SimpleWorldGuardAPI {
     /**
      * Receives a {@link List} of players that are in a specific region via id.
      * @param regionId Id of the {@link ProtectedRegion}
-     * @return List of {@link Player Players}
+     * @return List of {@link LivingEntity entities}
+     */
+    public static List<LivingEntity> getEntitiesInRegion(String regionId) {
+        final List<LivingEntity> entities = new ArrayList<>();
+        for(WgEntity we : WgEntity.getPlayerCache().values()) {
+            we.getRegions().forEach(protectedRegion -> {
+                if(regionId.equals(protectedRegion.getId())) entities.add(we.getEntity());
+            });
+        }
+        return entities;
+    }
+
+    /**
+     * Receives a {@link List} of players that are in a specific region via id.
+     * @param regionId Id of the {@link ProtectedRegion}
+     * @return List of {@link Player players}
      */
     public static List<Player> getPlayersInRegion(String regionId) {
-        final List<Player> players = new ArrayList<>();
-        for(WgPlayer wgPlayer : WgPlayer.getPlayerCache().values()) {
-            wgPlayer.getRegions().forEach(protectedRegion -> {
-                if(regionId.equals(protectedRegion.getId())) players.add(wgPlayer.getPlayer());
-            });
+        return getEntitiesInRegion(regionId).stream()
+                .filter(entity -> entity instanceof Player)
+                .map(entity -> (Player) entity)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Receives a {@link List} of players that are in a specific region via {@link ProtectedRegion}.
+     * @param protectedRegion {@link ProtectedRegion} to be checked
+     * @return List of {@link LivingEntity entities}
+     */
+    public List<LivingEntity> getEntitiesInRegion(ProtectedRegion protectedRegion) {
+        final List<LivingEntity> players = new ArrayList<>();
+        for(WgEntity we : WgEntity.getPlayerCache().values()) {
+            if(we.getRegions().contains(protectedRegion)) {
+                players.add(we.getEntity());
+            }
         }
         return players;
     }
@@ -113,16 +142,13 @@ public class SimpleWorldGuardAPI {
     /**
      * Receives a {@link List} of players that are in a specific region via {@link ProtectedRegion}.
      * @param protectedRegion {@link ProtectedRegion} to be checked
-     * @return List of {@link Player Players}
+     * @return List of {@link LivingEntity entities}
      */
     public List<Player> getPlayersInRegion(ProtectedRegion protectedRegion) {
-        final List<Player> players = new ArrayList<>();
-        for(WgPlayer wgPlayer : WgPlayer.getPlayerCache().values()) {
-            if(wgPlayer.getRegions().contains(protectedRegion)) {
-                players.add(wgPlayer.getPlayer());
-            }
-        }
-        return players;
+        return getEntitiesInRegion(protectedRegion).stream()
+                .filter(entity -> entity instanceof Player)
+                .map(entity -> (Player) entity)
+                .collect(Collectors.toList());
     }
 
 }

@@ -2,6 +2,7 @@ package com.muhammaddaffa.mdlib.worldguards.events;
 
 import com.muhammaddaffa.mdlib.worldguards.MovementWay;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.player.PlayerEvent;
@@ -16,11 +17,11 @@ public class RegionLeaveEvent extends RegionEvent implements Cancellable {
      * creates a new RegionLeaveEvent
      *
      * @param region   the region the player is leaving
-     * @param player   the player who triggered the event
+     * @param entity   the entity who triggered the event
      * @param movement the type of movement how the player leaves the region
      */
-    public RegionLeaveEvent(ProtectedRegion region, Player player, MovementWay movement, PlayerEvent parent) {
-        super(region, player, movement, parent);
+    public RegionLeaveEvent(ProtectedRegion region, LivingEntity entity, MovementWay movement) {
+        super(region, entity, movement);
         this.cancelled = false;
         this.cancellable = true;
 

@@ -9,21 +9,21 @@ import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.player.PlayerEvent;
 
 import java.util.*;
 
-public class WgPlayer {
+public class WgEntity {
 
-    private final Player player;
+    private final LivingEntity entity;
     private final List<ProtectedRegion> regions = new ArrayList<>();
 
-    public WgPlayer(Player player) {
-        this.player = player;
+    public WgEntity(LivingEntity entity) {
+        this.entity = entity;
     }
 
-    public boolean updateRegions(MovementWay way, Location to, Location from, PlayerEvent parent) {
+    public boolean updateRegions(MovementWay way, Location to, Location from) {
         Objects.requireNonNull(way, "MovementWay 'way' can not be null.");
         Objects.requireNonNull(to, "Location 'to' can not be null.");
         Objects.requireNonNull(from, "Location 'from' can not be null.");
@@ -33,13 +33,13 @@ public class WgPlayer {
         if(!toRegions.getRegions().isEmpty()) {
             for(ProtectedRegion region : toRegions) {
                 if(!regions.contains(region)) {
-                    final RegionEnterEvent enter = new RegionEnterEvent(region, player, way, parent);
+                    final RegionEnterEvent enter = new RegionEnterEvent(region, entity, way);
                     Bukkit.getPluginManager().callEvent(enter);
                     if(enter.isCancelled()) {
                         return true;
                     }
                     regions.add(region);
-                    Executor.syncLater(1L, () -> Bukkit.getPluginManager().callEvent(new RegionEnteredEvent(region, player, way, parent)));
+                    Executor.syncLater(1L, () -> Bukkit.getPluginManager().callEvent(new RegionEnteredEvent(region, entity, way)));
                 }
 
             }
@@ -48,12 +48,12 @@ public class WgPlayer {
 
             for(ProtectedRegion oldRegion : fromRegions) {
                 if(!toRegions.getRegions().contains(oldRegion)) {
-                    final RegionLeaveEvent leave = new RegionLeaveEvent(oldRegion, player, way, parent);
+                    final RegionLeaveEvent leave = new RegionLeaveEvent(oldRegion, entity, way);
                     Bukkit.getPluginManager().callEvent(leave);
                     if(leave.isCancelled()) {
                         return true;
                     }
-                    Executor.syncLater(1L, () -> Bukkit.getPluginManager().callEvent(new RegionLeftEvent(oldRegion, player, way, parent)));
+                    Executor.syncLater(1L, () -> Bukkit.getPluginManager().callEvent(new RegionLeftEvent(oldRegion, entity, way)));
                     toRemove.add(oldRegion);
                 }
             }
@@ -61,12 +61,12 @@ public class WgPlayer {
 
         } else {
             for(ProtectedRegion region : regions) {
-                final RegionLeaveEvent leave = new RegionLeaveEvent(region, player, way, parent);
+                final RegionLeaveEvent leave = new RegionLeaveEvent(region, entity, way);
                 Bukkit.getPluginManager().callEvent(leave);
                 if(leave.isCancelled()) {
                     return true;
                 }
-                Executor.syncLater(1L, () -> Bukkit.getPluginManager().callEvent(new RegionLeftEvent(region, player, way, parent)));
+                Executor.syncLater(1L, () -> Bukkit.getPluginManager().callEvent(new RegionLeftEvent(region, entity, way)));
             }
             regions.clear();
         }
@@ -78,22 +78,26 @@ public class WgPlayer {
         return regions;
     }
 
-    public Player getPlayer() {
-        return player;
+    public LivingEntity getEntity() {
+        return entity;
     }
 
     // --------------------------------------
     // --------------------------------------
     // --------------------------------------
 
-    private static final HashMap<UUID, WgPlayer> playerCache = new HashMap<>();
+    private static final Map<UUID, WgEntity> playerCache = new HashMap<>();
 
-    public static HashMap<UUID, WgPlayer> getPlayerCache() {
+    public static Map<UUID, WgEntity> getPlayerCache() {
         return playerCache;
     }
 
-    public static WgPlayer get(UUID uuid) {
+    public static WgEntity get(UUID uuid) {
         return playerCache.get(uuid);
+    }
+
+    public static WgEntity get(LivingEntity entity) {
+        return playerCache.computeIfAbsent(entity.getUniqueId(), k -> new WgEntity(entity));
     }
 
 }

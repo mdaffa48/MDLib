@@ -2,18 +2,15 @@ package com.muhammaddaffa.mdlib;
 
 import com.jeff_media.customblockdata.CustomBlockData;
 import com.muhammaddaffa.mdlib.hooks.VaultEconomy;
-import com.muhammaddaffa.mdlib.utils.Common;
-import com.muhammaddaffa.mdlib.worldguards.listeners.PaperRegionListener;
+import com.muhammaddaffa.mdlib.utils.Logger;
+import com.muhammaddaffa.mdlib.worldguards.listeners.EntityRegionListener;
 import com.muhammaddaffa.mdlib.worldguards.listeners.RegionListener;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
 import fr.mrmicky.fastinv.FastInvManager;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import java.util.List;
 
 public final class MDLib {
 
@@ -72,9 +69,11 @@ public final class MDLib {
         // Register events
         if (usingWorldGuard() && LISTEN_WORLDGUARD) {
             pm.registerEvents(new RegionListener(), instance);
+            Logger.info("WorldGuard hook from MDLib is enabled, registering it...");
             // Check if it's using paper
             if (isPaper()) {
-                pm.registerEvents(new PaperRegionListener(), instance);
+                pm.registerEvents(new EntityRegionListener(), instance);
+                Logger.info("Using paper, an enhanced MDLib WorldGuard hook has been installed!");
             }
         }
 
