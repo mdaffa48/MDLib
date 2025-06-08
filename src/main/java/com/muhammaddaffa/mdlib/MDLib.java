@@ -3,6 +3,7 @@ package com.muhammaddaffa.mdlib;
 import com.jeff_media.customblockdata.CustomBlockData;
 import com.muhammaddaffa.mdlib.hooks.VaultEconomy;
 import com.muhammaddaffa.mdlib.utils.Common;
+import com.muhammaddaffa.mdlib.worldguards.listeners.PaperRegionListener;
 import com.muhammaddaffa.mdlib.worldguards.listeners.RegionListener;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
@@ -71,6 +72,10 @@ public final class MDLib {
         // Register events
         if (usingWorldGuard() && LISTEN_WORLDGUARD) {
             pm.registerEvents(new RegionListener(), instance);
+            // Check if it's using paper
+            if (isPaper()) {
+                pm.registerEvents(new PaperRegionListener(), instance);
+            }
         }
 
         // If using vault, register the VaultEconomy
@@ -105,6 +110,16 @@ public final class MDLib {
 
     public static void registerCustomBlockData() {
         CUSTOM_BLOCK_DATA = true;
+    }
+
+    private static boolean isPaper() {
+        try {
+            // Any other works, just the shortest I could find.
+            Class.forName("com.destroystokyo.paper.ParticleBuilder");
+            return true;
+        } catch (ClassNotFoundException ignored) {
+            return false;
+        }
     }
 
     public static JavaPlugin instance() {
