@@ -6,10 +6,14 @@ import com.muhammaddaffa.mdlib.worldguards.WgEntity;
 import com.muhammaddaffa.mdlib.worldguards.events.RegionLeaveEvent;
 import com.muhammaddaffa.mdlib.worldguards.events.RegionLeftEvent;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import io.papermc.paper.event.entity.EntityMoveEvent;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityTeleportEvent;
 import org.bukkit.event.player.*;
 
 public class RegionListener implements Listener {
@@ -26,6 +30,22 @@ public class RegionListener implements Listener {
         final WgEntity we = WgEntity.get(e.getPlayer().getUniqueId());
         if(we != null) {
             we.updateRegions(MovementWay.SPAWN, e.getPlayer().getLocation(), e.getPlayer().getLocation());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    private void onEntityMove(PlayerMoveEvent event) {
+        final WgEntity we = WgEntity.get(event.getPlayer());
+        if (we != null) {
+            event.setCancelled(we.updateRegions(MovementWay.MOVE, event.getTo(), event.getFrom()));
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    private void onEntityTeleport(PlayerTeleportEvent event) {
+        final WgEntity we = WgEntity.get(event.getPlayer());
+        if (we != null) {
+            event.setCancelled(we.updateRegions(MovementWay.TELEPORT, event.getTo(), event.getFrom()));
         }
     }
 
