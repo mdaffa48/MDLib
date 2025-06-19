@@ -3,6 +3,8 @@ package com.muhammaddaffa.mdlib.utils;
 import com.cryptomorin.xseries.profiles.builder.XSkull;
 import com.cryptomorin.xseries.profiles.objects.ProfileInputType;
 import com.cryptomorin.xseries.profiles.objects.Profileable;
+import com.nexomc.nexo.api.NexoItems;
+import dev.lone.itemsadder.api.CustomStack;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
@@ -315,18 +317,44 @@ public class ItemBuilder {
         }
 
         // start building the itemstack
-        ItemBuilder builder;
+        ItemBuilder builder = null;
         if (materialString.contains(";")) {
-            String value = materialString.split(";")[1];
-            builder = new ItemBuilder(Material.PLAYER_HEAD);
-            builder.skull(value);
-        } else {
+            String[] split = materialString.split(";");
+            String identifier = split[0];
+            String value = split[1];
+
+            // If the identifier is head, proceed to player head
+            if (identifier.equalsIgnoreCase("head")) {
+                builder = new ItemBuilder(Material.PLAYER_HEAD);
+                builder.skull(value);
+            }
+
+            // Support for identifier from Nexo
+            if (identifier.equalsIgnoreCase("nexo") && Bukkit.getPluginManager().isPluginEnabled("Nexo")) {
+                Optional<com.nexomc.nexo.items.ItemBuilder> nexoBuilder = NexoItems.optionalItemFromId(value);
+                if (nexoBuilder.isPresent()) {
+                    builder = new ItemBuilder(nexoBuilder.get().build());
+                }
+            }
+
+            // Support for identifier from ItemsAdder
+            if (identifier.equalsIgnoreCase("ia") && Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
+                CustomStack stack = CustomStack.getInstance(value);
+                if (stack != null) {
+                    builder = new ItemBuilder(stack.getItemStack());
+                }
+            }
+        }
+
+        // If the builder is still null based from the code above, we try to use Minecraft's material or
+        if (builder == null) {
             Material material = Material.matchMaterial(materialString);
             if (material == null) {
                 material = Material.DIRT;
             }
             builder = new ItemBuilder(material);
         }
+
         // set the amount
         builder.amount(Math.max(1, amount));
         // set the cmd
