@@ -316,44 +316,8 @@ public class ItemBuilder {
             lore = PlaceholderAPI.setPlaceholders(null, lore);
         }
 
-        // start building the itemstack
-        ItemBuilder builder = null;
-        if (materialString.contains(";")) {
-            String[] split = materialString.split(";");
-            String identifier = split[0];
-            String value = split[1];
-
-            // If the identifier is head, proceed to player head
-            if (identifier.equalsIgnoreCase("head")) {
-                builder = new ItemBuilder(Material.PLAYER_HEAD);
-                builder.skull(value);
-            }
-
-            // Support for identifier from Nexo
-            if (identifier.equalsIgnoreCase("nexo") && Bukkit.getPluginManager().isPluginEnabled("Nexo")) {
-                Optional<com.nexomc.nexo.items.ItemBuilder> nexoBuilder = NexoItems.optionalItemFromId(value);
-                if (nexoBuilder.isPresent()) {
-                    builder = new ItemBuilder(nexoBuilder.get().build());
-                }
-            }
-
-            // Support for identifier from ItemsAdder
-            if (identifier.equalsIgnoreCase("ia") && Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
-                CustomStack stack = CustomStack.getInstance(value);
-                if (stack != null) {
-                    builder = new ItemBuilder(stack.getItemStack());
-                }
-            }
-        }
-
-        // If the builder is still null based from the code above, we try to use Minecraft's material or
-        if (builder == null) {
-            Material material = Material.matchMaterial(materialString);
-            if (material == null) {
-                material = Material.DIRT;
-            }
-            builder = new ItemBuilder(material);
-        }
+        // start building the item
+        ItemBuilder builder = retrieveItemBuilder(materialString);
 
         // set the amount
         builder.amount(Math.max(1, amount));
@@ -404,6 +368,40 @@ public class ItemBuilder {
         }
 
         return builder;
+    }
+
+    public static ItemBuilder retrieveItemBuilder(String materialString) {
+        String[] parts  = materialString.split(";", 2);
+        String id       = parts[0].trim();
+        String val      = parts.length > 1 ? parts[1].trim() : "";
+
+        if (parts.length == 2) {
+            switch (id.toLowerCase()) {
+                case "head":
+                    return new ItemBuilder(Material.PLAYER_HEAD)
+                            .skull(val);
+                case "nexo":
+                    if (Bukkit.getPluginManager().isPluginEnabled("Nexo")) {
+                        return NexoItems
+                                .optionalItemFromId(val)
+                                .map(nb -> new ItemBuilder(nb.build()))
+                                .orElseGet(() -> new ItemBuilder(Material.DIRT));
+                    }
+                    break;
+                case "ia":
+                    if (Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
+                        CustomStack stack = CustomStack.getInstance(val);
+                        if (stack != null) {
+                            return new ItemBuilder(stack.getItemStack());
+                        }
+                    }
+                    break;
+            }
+        }
+
+        // if we get here nothing matched, so treat the whole string as a vanilla material:
+        Material mat = Material.matchMaterial(materialString);
+        return new ItemBuilder(mat == null ? Material.DIRT : mat);
     }
 
     public ItemStack build() {
