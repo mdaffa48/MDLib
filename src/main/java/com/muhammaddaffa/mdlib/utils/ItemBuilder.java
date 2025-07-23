@@ -5,6 +5,7 @@ import com.cryptomorin.xseries.profiles.objects.ProfileInputType;
 import com.cryptomorin.xseries.profiles.objects.Profileable;
 import com.nexomc.nexo.api.NexoItems;
 import dev.lone.itemsadder.api.CustomStack;
+import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
@@ -393,6 +394,15 @@ public class ItemBuilder {
                         CustomStack stack = CustomStack.getInstance(val);
                         if (stack != null) {
                             return new ItemBuilder(stack.getItemStack());
+                        }
+                    }
+                    break;
+                case "hdb":
+                    if (Bukkit.getPluginManager().isPluginEnabled("HeadDatabase")) {
+                        HeadDatabaseAPI api = new HeadDatabaseAPI();
+                        ItemStack head = api.getItemHead(val);
+                        if (head != null) {
+                            return new ItemBuilder(head);
                         }
                     }
                     break;
