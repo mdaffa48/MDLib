@@ -1,4 +1,4 @@
-package com.muhammaddaffa.mdlib.worldguards.listeners;
+package com.muhammaddaffa.mdlib.worldguards.listeners.entity;
 
 import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import com.muhammaddaffa.mdlib.worldguards.MovementWay;
@@ -13,7 +13,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
-import org.bukkit.event.entity.EntityRemoveEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.entity.EntityTeleportEvent;
 
@@ -55,24 +54,6 @@ public class EntityRegionListener implements Listener {
         final WgEntity we = WgEntity.get(entity);
         if(we != null) {
             we.updateRegions(MovementWay.SPAWN, entity.getLocation(), entity.getLocation());
-        }
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    private void onEntityRemove(EntityRemoveEvent event) {
-        if (!(event.getEntity() instanceof LivingEntity entity))
-            return;
-
-        final WgEntity we = WgEntity.get(entity.getUniqueId());
-        if (we != null) {
-            for (ProtectedRegion region : we.getRegions()) {
-                final RegionLeaveEvent leaveEvent = new RegionLeaveEvent(region, entity, MovementWay.DISCONNECT);
-                final RegionLeftEvent leftEvent = new RegionLeftEvent(region, entity, MovementWay.DISCONNECT);
-                Bukkit.getPluginManager().callEvent(leaveEvent);
-                Bukkit.getPluginManager().callEvent(leftEvent);
-            }
-            we.getRegions().clear();
-            WgEntity.getPlayerCache().remove(entity.getUniqueId());
         }
     }
 

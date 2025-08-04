@@ -3,8 +3,9 @@ package com.muhammaddaffa.mdlib;
 import com.jeff_media.customblockdata.CustomBlockData;
 import com.muhammaddaffa.mdlib.hooks.VaultEconomy;
 import com.muhammaddaffa.mdlib.utils.Logger;
-import com.muhammaddaffa.mdlib.worldguards.listeners.EntityRegionListener;
+import com.muhammaddaffa.mdlib.worldguards.listeners.entity.EntityRegionListener;
 import com.muhammaddaffa.mdlib.worldguards.listeners.RegionListener;
+import com.muhammaddaffa.mdlib.worldguards.listeners.entity.EntityRemoveListenerV1_20_4;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
 import fr.mrmicky.fastinv.FastInvManager;
@@ -70,6 +71,11 @@ public final class MDLib {
         if (usingWorldGuard() && LISTEN_WORLDGUARD) {
             pm.registerEvents(new RegionListener(), instance);
             Logger.info("WorldGuard hook from MDLib is enabled, registering it...");
+            // Check if it's version 1.20.4 or newer
+            if (is1_20_4OrNewer()) {
+                pm.registerEvents(new EntityRemoveListenerV1_20_4(), instance);
+                Logger.info("Version is v1.20.4 or newer, registering EntityRemoveEvent listener!");
+            }
             // Check if it's using paper
             if (isPaper()) {
                 pm.registerEvents(new EntityRegionListener(), instance);
@@ -115,6 +121,15 @@ public final class MDLib {
         try {
             // Any other works, just the shortest I could find.
             Class.forName("com.destroystokyo.paper.ParticleBuilder");
+            return true;
+        } catch (ClassNotFoundException ignored) {
+            return false;
+        }
+    }
+
+    private static boolean is1_20_4OrNewer() {
+        try {
+            Class.forName("org.bukkit.event.entity.EntityRemoveEvent;");
             return true;
         } catch (ClassNotFoundException ignored) {
             return false;
