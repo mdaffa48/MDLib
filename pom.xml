@@ -264,7 +264,7 @@
         <!-- Command API -->
         <dependency>
             <groupId>dev.jorel</groupId>
-            <artifactId>commandapi-bukkit-shade</artifactId>
+            <artifactId>commandapi-spigot-shade</artifactId>
             <version>11.0.0</version>
         </dependency>
         <!-- Mojang Authlib -->
