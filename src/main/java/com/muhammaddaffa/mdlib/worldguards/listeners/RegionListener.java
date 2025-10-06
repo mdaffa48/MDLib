@@ -1,19 +1,14 @@
 package com.muhammaddaffa.mdlib.worldguards.listeners;
 
 import com.muhammaddaffa.mdlib.worldguards.MovementWay;
-import com.muhammaddaffa.mdlib.worldguards.SimpleWorldGuardAPI;
 import com.muhammaddaffa.mdlib.worldguards.WgEntity;
 import com.muhammaddaffa.mdlib.worldguards.events.RegionLeaveEvent;
 import com.muhammaddaffa.mdlib.worldguards.events.RegionLeftEvent;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import io.papermc.paper.event.entity.EntityMoveEvent;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityTeleportEvent;
 import org.bukkit.event.player.*;
 
 public class RegionListener implements Listener {
