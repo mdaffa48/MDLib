@@ -6,8 +6,10 @@ import com.muhammaddaffa.mdlib.utils.Logger;
 import com.muhammaddaffa.mdlib.worldguards.listeners.entity.EntityRegionListener;
 import com.muhammaddaffa.mdlib.worldguards.listeners.RegionListener;
 import com.muhammaddaffa.mdlib.worldguards.listeners.entity.EntityRemoveListenerV1_20_4;
+
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
+import dev.jorel.commandapi.CommandAPISpigotConfig;
 import fr.mrmicky.fastinv.FastInvManager;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
@@ -31,7 +33,7 @@ public final class MDLib {
     public static void inject(JavaPlugin plugin) {
         // load the command api
         if (COMMANDAPI) {
-            CommandAPI.onLoad(new CommandAPIBukkitConfig(plugin)
+            CommandAPI.onLoad(new CommandAPISpigotConfig(plugin)
                     .verboseOutput(VERBOSE_OUTPUT)
                     .silentLogs(SILENT_LOGS));
         }
