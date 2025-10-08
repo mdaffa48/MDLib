@@ -7,9 +7,6 @@ import com.muhammaddaffa.mdlib.worldguards.listeners.entity.EntityRegionListener
 import com.muhammaddaffa.mdlib.worldguards.listeners.RegionListener;
 import com.muhammaddaffa.mdlib.worldguards.listeners.entity.EntityRemoveListenerV1_20_4;
 
-import dev.jorel.commandapi.CommandAPI;
-import dev.jorel.commandapi.CommandAPIBukkitConfig;
-import dev.jorel.commandapi.CommandAPISpigotConfig;
 import fr.mrmicky.fastinv.FastInvManager;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
@@ -19,11 +16,8 @@ public final class MDLib {
 
     private static JavaPlugin instance;
 
-    public static boolean VERBOSE_OUTPUT = false;
-    public static boolean SILENT_LOGS = true;
     public static boolean LISTEN_WORLDGUARD = false;
     public static boolean CUSTOM_BLOCK_DATA = false;
-    public static boolean COMMANDAPI = true;
 
     private static boolean PLACEHOLDER_API, VAULT, WORLD_GUARD;
 
@@ -31,22 +25,13 @@ public final class MDLib {
      * This method should be executed in JavaPlugin#onLoad
      */
     public static void inject(JavaPlugin plugin) {
-        // load the command api
-        if (COMMANDAPI) {
-            CommandAPI.onLoad(new CommandAPISpigotConfig(plugin)
-                    .verboseOutput(VERBOSE_OUTPUT)
-                    .silentLogs(SILENT_LOGS));
-        }
+
     }
 
     /**
      * This method should be executed in JavaPlugin#onEnable
      */
     public static void onEnable(JavaPlugin plugin) {
-        // enable the command api
-        if (COMMANDAPI) {
-            CommandAPI.onEnable();
-        }
         // initialize the instance
         instance = plugin;
         // check if server is using placeholderapi
@@ -62,9 +47,7 @@ public final class MDLib {
      * @return
      */
     public static void shutdown() {
-        if (COMMANDAPI) {
-            CommandAPI.onDisable();
-        }
+
     }
 
     private static void registerListeners() {

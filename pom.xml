@@ -35,10 +35,6 @@
                 <configuration>
                     <relocations>
                         <relocation>
-                            <pattern>dev.jorel.commandapi</pattern>
-                            <shadedPattern>com.muhammaddaffa.mdlib.commandapi</shadedPattern>
-                        </relocation>
-                        <relocation>
                             <pattern>com.tchristofferson.configupdater</pattern>
                             <shadedPattern>com.muhammaddaffa.mdlib.configupdater</shadedPattern>
                         </relocation>
@@ -243,12 +239,6 @@
             <groupId>com.tchristofferson</groupId>
             <artifactId>ConfigUpdater</artifactId>
             <version>2.2-SNAPSHOT</version>
-        </dependency>
-        <!-- Command API -->
-        <dependency>
-            <groupId>dev.jorel</groupId>
-            <artifactId>commandapi-spigot-shade</artifactId>
-            <version>11.0.0</version>
         </dependency>
         <!-- Mojang Authlib -->
         <dependency>
