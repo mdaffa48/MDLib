@@ -15,9 +15,9 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
         boolean run(CommandSender sender, CommandContext ctx) throws Exception;
     }
 
-    /** Unified plan (root or sub). If literal == null → it's the root plan. */
     public static final class CommandPlan {
         private final String literal; // null for root
+        private final List<String> aliases = new ArrayList<>();
         private final List<Param> params = new ArrayList<>();
         private String permission; // optional (root falls back to command's root perm)
         private Handler handler;
@@ -28,6 +28,19 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
         public String permission() { return permission; }
         public boolean isRoot() { return literal == null; }
         public boolean isDefined() { return handler != null; }
+
+        public CommandPlan alias(String... names) {
+            if (!isRoot()) aliases.addAll(Arrays.asList(names));
+            return this;
+        }
+        public List<String> aliases() { return Collections.unmodifiableList(aliases); }
+
+        public boolean matchesToken(String token) {
+            if (isRoot()) return false;
+            if (literal.equalsIgnoreCase(token)) return true;
+            for (String a : aliases) if (a.equalsIgnoreCase(token)) return true;
+            return false;
+        }
 
         public CommandPlan arg(String name, ArgumentType<?> type) {
             boolean opt = (type instanceof OptionalArg<?>);
@@ -42,7 +55,9 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
         public CommandPlan exec(Handler handler) { this.handler = handler; return this; }
 
         private boolean handle(CommandSender sender, String[] raw, String fallbackPerm) throws Exception {
-            String permToCheck = permission != null && !permission.isBlank() ? permission : (isRoot() ? fallbackPerm : null);
+            String permToCheck = permission != null && !permission.isBlank()
+                    ? permission
+                    : (isRoot() ? fallbackPerm : null);
             if (permToCheck != null && !permToCheck.isBlank() && !sender.hasPermission(permToCheck)) {
                 sender.sendMessage("§cYou don't have permission to use this command.");
                 return true;
@@ -85,6 +100,15 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
             }
             return sb.toString();
         }
+
+        /** Labels used for first-token tab suggestions (primary + aliases). */
+        public List<String> labelsForTab() {
+            if (isRoot()) return List.of();
+            List<String> out = new ArrayList<>(1 + aliases.size());
+            out.add(literal);
+            out.addAll(aliases);
+            return out;
+        }
     }
 
     // -------- RoutedCommand state --------
@@ -94,7 +118,10 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
     private final String permission;    // root command permission (also set in Bukkit wrapper)
 
     private final CommandPlan rootPlan = new CommandPlan(null);
-    private final Map<String, CommandPlan> subs = new LinkedHashMap<>();
+    private final List<CommandPlan> subs = new ArrayList<>();
+
+    // root-level aliases (for /cmd itself)
+    private final List<String> rootAliases = new ArrayList<>();
 
     protected RoutedCommand(String name, String description, String explicitUsage, String permission) {
         this.name = name;
@@ -103,13 +130,21 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
         this.permission = permission;
     }
 
+    /** Add root command aliases (e.g., /hello, /hi, /hey). */
+    public RoutedCommand alias(String... names) {
+        rootAliases.addAll(Arrays.asList(names));
+        return this;
+    }
+
+    @Override public List<String> aliases() { return Collections.unmodifiableList(rootAliases); }
+
     /** Configure the root command behavior (no literal). */
     protected CommandPlan root() { return rootPlan; }
 
-    /** Add a subcommand with the given literal. */
+    /** Add a subcommand with the given primary literal. */
     protected CommandPlan sub(String literal) {
         CommandPlan p = new CommandPlan(literal);
-        subs.put(literal.toLowerCase(Locale.ROOT), p);
+        subs.add(p);
         return p;
     }
 
@@ -121,7 +156,7 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
     public String usage() {
         if (explicitUsage != null && !explicitUsage.isEmpty()) return explicitUsage;
         if (rootPlan.isDefined()) return rootPlan.usageString(name);
-        if (!subs.isEmpty()) return subs.values().iterator().next().usageString(name);
+        if (!subs.isEmpty()) return subs.get(0).usageString(name);
         return "/" + name;
     }
 
@@ -133,12 +168,17 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
                 return onRoot(sender);
             }
 
-            String first = raw[0].toLowerCase(Locale.ROOT);
-            CommandPlan sub = subs.get(first);
+            String first = raw[0];
 
-            if (sub != null) {
+            // find matching sub by primary literal or any alias
+            CommandPlan matched = null;
+            for (CommandPlan p : subs) {
+                if (p.matchesToken(first)) { matched = p; break; }
+            }
+
+            if (matched != null) {
                 String[] rest = Arrays.copyOfRange(raw, 1, raw.length);
-                return sub.handle(sender, rest, null); // sub handles its own perm (no fallback)
+                return matched.handle(sender, rest, null); // sub handles its own perm
             }
 
             if (rootPlan.isDefined()) return rootPlan.handle(sender, raw, permission);
@@ -157,13 +197,20 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
     }
 
     protected boolean onRoot(CommandSender sender) {
-        String list = subs.entrySet().stream()
-                .filter(e -> {
-                    String perm = e.getValue().permission();
-                    return perm == null || perm.isBlank() || sender.hasPermission(perm);
-                })
-                .map(Map.Entry::getKey)
-                .reduce((a,b) -> a + "§7, §f" + b).orElse("-");
+        // show only subs the sender can access; include aliases in the list
+        List<String> visible = new ArrayList<>();
+        for (CommandPlan p : subs) {
+            String perm = p.permission();
+            if (perm == null || perm.isBlank() || sender.hasPermission(perm)) {
+                // format: "give (g, grant)" if aliases exist
+                List<String> labels = p.labelsForTab();
+                String primary = labels.isEmpty() ? "" : labels.get(0);
+                List<String> rest = labels.size() > 1 ? labels.subList(1, labels.size()) : List.of();
+                if (rest.isEmpty()) visible.add(primary);
+                else visible.add(primary + " §8(" + String.join(", ", rest) + ")§7");
+            }
+        }
+        String list = visible.isEmpty() ? "-" : String.join("§7, §f", visible);
         sender.sendMessage("§7Available: §f" + list);
         sender.sendMessage("§7Usage: §f" + usage());
         return true;
@@ -177,37 +224,42 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
     @Override
     public List<String> tabComplete(CommandSender sender, String alias, String[] raw) {
         if (raw.length == 0) {
-            List<String> first = new ArrayList<>(subs.entrySet().stream()
-                    .filter(e -> {
-                        String perm = e.getValue().permission();
-                        return perm == null || perm.isBlank() || sender.hasPermission(perm);
-                    })
-                    .map(Map.Entry::getKey).toList());
+            // Suggest all visible sub labels; also root arg suggestions (first param) if root defined
+            List<String> first = new ArrayList<>();
+            for (CommandPlan p : subs) {
+                String perm = p.permission();
+                if (perm == null || perm.isBlank() || sender.hasPermission(perm)) {
+                    first.addAll(p.labelsForTab());
+                }
+            }
             if (rootPlan.isDefined()) first.addAll(rootPlan.tab(sender, new String[]{}));
             return first;
         }
 
         if (raw.length == 1) {
             String prefix = raw[0].toLowerCase(Locale.ROOT);
-            List<String> subsMatch = subs.entrySet().stream()
-                    .filter(e -> {
-                        String perm = e.getValue().permission();
-                        return perm == null || perm.isBlank() || sender.hasPermission(perm);
-                    })
-                    .map(Map.Entry::getKey)
-                    .filter(k -> k.startsWith(prefix))
-                    .toList();
-
-            if (subsMatch.isEmpty() && rootPlan.isDefined()) {
+            List<String> out = new ArrayList<>();
+            for (CommandPlan p : subs) {
+                String perm = p.permission();
+                if (perm != null && !perm.isBlank() && !sender.hasPermission(perm)) continue;
+                for (String label : p.labelsForTab()) {
+                    if (label.toLowerCase(Locale.ROOT).startsWith(prefix)) out.add(label);
+                }
+            }
+            if (out.isEmpty() && rootPlan.isDefined()) {
                 return rootPlan.tab(sender, new String[]{ raw[0] });
             }
-            return subsMatch;
+            return out;
         }
 
-        CommandPlan sub = subs.get(raw[0].toLowerCase(Locale.ROOT));
-        if (sub != null) {
+        // raw.length >= 2
+        CommandPlan matched = null;
+        for (CommandPlan p : subs) {
+            if (p.matchesToken(raw[0])) { matched = p; break; }
+        }
+        if (matched != null) {
             String[] rest = Arrays.copyOfRange(raw, 1, raw.length);
-            return sub.tab(sender, rest);
+            return matched.tab(sender, rest);
         }
 
         if (rootPlan.isDefined()) return rootPlan.tab(sender, raw);
