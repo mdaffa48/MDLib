@@ -2,13 +2,14 @@ package com.muhammaddaffa.mdlib.commands.commands;
 
 import com.muhammaddaffa.mdlib.commands.args.*;
 import org.bukkit.command.CommandSender;
+import org.bukkit.util.StringUtil;
 
 import java.util.*;
 
 public abstract class RoutedCommand implements SimpleCommandSpec {
 
     // -------- Shared plumbing --------
-    protected record Param(String name, ArgumentType<?> type, boolean optional) {}
+    protected record Param(String name, ArgumentType<?> type, boolean optional, Suggester suggester) {}
 
     @FunctionalInterface
     public interface Handler {
@@ -42,17 +43,33 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
             return false;
         }
 
+        public CommandPlan arg(String name, ArgumentType<?> type, Suggester suggester) {
+            boolean opt = (type instanceof OptionalArg<?>);
+            params.add(new Param(name, type, opt, suggester));
+            return this;
+        }
+
+        public CommandPlan argOptional(String name, ArgumentType<?> type, Suggester suggester) {
+            ArgumentType<?> wrapped = (type instanceof OptionalArg<?>) ? type : OptionalArg.of(type);
+            params.add(new Param(name, wrapped, true, suggester));
+            return this;
+        }
+
         public CommandPlan arg(String name, ArgumentType<?> type) {
             boolean opt = (type instanceof OptionalArg<?>);
-            params.add(new Param(name, type, opt));
+            params.add(new Param(name, type, opt, null));
             return this;
         }
         public CommandPlan argOptional(String name, ArgumentType<?> type) {
             ArgumentType<?> wrapped = (type instanceof OptionalArg<?>) ? type : OptionalArg.of(type);
-            params.add(new Param(name, wrapped, true));
+            params.add(new Param(name, wrapped, true, null));
             return this;
         }
-        public CommandPlan exec(Handler handler) { this.handler = handler; return this; }
+
+        public CommandPlan exec(Handler handler) {
+            this.handler = handler;
+            return this;
+        }
 
         private boolean handle(CommandSender sender, String[] raw, String fallbackPerm) throws Exception {
             String permToCheck = permission != null && !permission.isBlank()
@@ -83,11 +100,24 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
 
         private List<String> tab(CommandSender sender, String[] raw) {
             if (params.isEmpty()) return List.of();
+
             int argIndex = Math.max(0, raw.length - 1);
             if (argIndex >= params.size()) return List.of();
+
             Param p = params.get(argIndex);
             String prefix = raw.length == 0 ? "" : raw[raw.length - 1];
-            return p.type.suggestions(sender, prefix);
+
+            // 1) get raw suggestions (custom suggester first, else arg type)
+            List<String> rawSugs = (p.suggester != null)
+                    ? p.suggester.get(sender, prefix)
+                    : p.type.suggestions(sender, prefix);
+
+            if (rawSugs == null || rawSugs.isEmpty()) return List.of();
+
+            // 2) prefix-filter with Bukkit's StringUtil to mimic vanilla behavior
+            List<String> out = new java.util.ArrayList<>(rawSugs.size());
+            StringUtil.copyPartialMatches(prefix, rawSugs, out);
+            return out;
         }
 
         public String usageString(String rootLabel) {
@@ -109,6 +139,15 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
             out.addAll(aliases);
             return out;
         }
+
+        // utility to display the placeholder "[amount]" or "<amount>" for the FIRST param
+        String firstParamPlaceholder() {
+            if (params.isEmpty()) return null;
+            Param p = params.get(0);
+            String name = p.name(); // use param NAME, not type id, as requested
+            return p.optional() ? "[" + name + "]" : "<" + name + ">";
+        }
+
     }
 
     // -------- RoutedCommand state --------
@@ -223,47 +262,59 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
 
     @Override
     public List<String> tabComplete(CommandSender sender, String alias, String[] raw) {
-        if (raw.length == 0) {
-            // Suggest all visible sub labels; also root arg suggestions (first param) if root defined
-            List<String> first = new ArrayList<>();
+        // FIRST TOKEN ("/cf " or "/cf a")
+        if (raw.length == 1) {
+            String prefix = raw[0] == null ? "" : raw[0];
+            List<String> candidates = new java.util.ArrayList<>();
+
+            // Root first-arg placeholder (e.g. "[amount]") — show as a candidate too
+            if (rootPlan.isDefined()) {
+                String ph = rootPlan.firstParamPlaceholder();
+                if (ph != null) candidates.add(ph);
+            }
+
+            // Primary sub names (not aliases — cleaner UX)
             for (CommandPlan p : subs) {
                 String perm = p.permission();
                 if (perm == null || perm.isBlank() || sender.hasPermission(perm)) {
-                    first.addAll(p.labelsForTab());
+                    var labels = p.labelsForTab(); // [primary, alias1, alias2...]
+                    if (!labels.isEmpty()) candidates.add(labels.get(0)); // primary only
                 }
             }
-            if (rootPlan.isDefined()) first.addAll(rootPlan.tab(sender, new String[]{}));
-            return first;
-        }
 
-        if (raw.length == 1) {
-            String prefix = raw[0].toLowerCase(Locale.ROOT);
-            List<String> out = new ArrayList<>();
-            for (CommandPlan p : subs) {
-                String perm = p.permission();
-                if (perm != null && !perm.isBlank() && !sender.hasPermission(perm)) continue;
-                for (String label : p.labelsForTab()) {
-                    if (label.toLowerCase(Locale.ROOT).startsWith(prefix)) out.add(label);
-                }
-            }
-            if (out.isEmpty() && rootPlan.isDefined()) {
-                return rootPlan.tab(sender, new String[]{ raw[0] });
-            }
+            // Filter dynamically by prefix → "acc" removes "hand"
+            List<String> out = new java.util.ArrayList<>(candidates.size());
+            StringUtil.copyPartialMatches(prefix, candidates, out);
             return out;
         }
 
-        // raw.length >= 2
+        // ZERO TOKENS (rare), just return both placeholder + subs without filtering
+        if (raw.length == 0) {
+            List<String> first = new java.util.ArrayList<>();
+            String ph = rootPlan.isDefined() ? rootPlan.firstParamPlaceholder() : null;
+            if (ph != null) first.add(ph);
+            for (CommandPlan p : subs) {
+                String perm = p.permission();
+                if (perm == null || perm.isBlank() || sender.hasPermission(perm)) {
+                    var labels = p.labelsForTab();
+                    if (!labels.isEmpty()) first.add(labels.get(0));
+                }
+            }
+            return first;
+        }
+
+        // SECOND+ TOKENS — choose sub vs root
         CommandPlan matched = null;
         for (CommandPlan p : subs) {
             if (p.matchesToken(raw[0])) { matched = p; break; }
         }
         if (matched != null) {
-            String[] rest = Arrays.copyOfRange(raw, 1, raw.length);
+            String[] rest = java.util.Arrays.copyOfRange(raw, 1, raw.length);
             return matched.tab(sender, rest);
         }
 
         if (rootPlan.isDefined()) return rootPlan.tab(sender, raw);
-
         return List.of();
     }
+
 }
