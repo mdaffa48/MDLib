@@ -26,8 +26,10 @@ public class BukkitCommandWrapper extends Command implements PluginIdentifiableC
 
     @Override
     public boolean execute(@NotNull CommandSender sender, @NotNull String label, String @NotNull [] args) {
-        if (!testPermission(sender)) return true; // root permission gate (Bukkit handles)
-        return spec.execute(sender, label, args);
+        if (!testPermission(sender))
+            return true;
+        spec.execute(sender, label, args);
+        return true;
     }
 
     @Override

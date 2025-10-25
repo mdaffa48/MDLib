@@ -9,7 +9,7 @@ import java.util.*;
 public abstract class RoutedCommand implements SimpleCommandSpec {
 
     // -------- Shared plumbing --------
-    protected record Param(String name, ArgumentType<?> type, boolean optional, Suggester suggester) {}
+    protected record Param(String name, ArgumentType<?> type, boolean optional, ArgSuggester suggester) {}
 
     @FunctionalInterface
     public interface Handler {
@@ -43,13 +43,13 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
             return false;
         }
 
-        public CommandPlan arg(String name, ArgumentType<?> type, Suggester suggester) {
+        public CommandPlan arg(String name, ArgumentType<?> type, ArgSuggester suggester) {
             boolean opt = (type instanceof OptionalArg<?>);
             params.add(new Param(name, type, opt, suggester));
             return this;
         }
 
-        public CommandPlan argOptional(String name, ArgumentType<?> type, Suggester suggester) {
+        public CommandPlan argOptional(String name, ArgumentType<?> type, ArgSuggester suggester) {
             ArgumentType<?> wrapped = (type instanceof OptionalArg<?>) ? type : OptionalArg.of(type);
             params.add(new Param(name, wrapped, true, suggester));
             return this;
@@ -104,19 +104,48 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
             int argIndex = Math.max(0, raw.length - 1);
             if (argIndex >= params.size()) return List.of();
 
-            Param p = params.get(argIndex);
+            // 1) Parse previous params (0..argIndex-1) into a PartialContext
+            PartialContext prev = new PartialContext();
+            TokenReader tr = new TokenReader(raw);
+            for (int i = 0; i < argIndex; i++) {
+                Param p = params.get(i);
+
+                // If no more tokens for a required, non-greedy param → we can’t know prev args → no suggestions.
+                if (!tr.hasNext() && !p.type.greedy()) {
+                    if (p.optional) { prev.put(p.name(), null); continue; }
+                    return List.of();
+                }
+
+                // Greedy args before current position make later params unreachable; bail out with no suggestions.
+                if (p.type.greedy()) {
+                    // consume the rest (for completeness)
+                    p.type.parse(sender, tr);
+                    return List.of();
+                }
+
+                try {
+                    Object parsed = p.type.parse(sender, tr);
+                    prev.put(p.name(), parsed);
+                } catch (Exception e) {
+                    // previous arg not valid yet → no suggestions
+                    return List.of();
+                }
+            }
+
+            // 2) Current param & prefix
+            Param current = params.get(argIndex);
             String prefix = raw.length == 0 ? "" : raw[raw.length - 1];
 
-            // 1) get raw suggestions (custom suggester first, else arg type)
-            List<String> rawSugs = (p.suggester != null)
-                    ? p.suggester.get(sender, prefix)
-                    : p.type.suggestions(sender, prefix);
+            // Prefer custom ArgSuggester if present; else fall back to ArgumentType.suggestions
+            List<String> candidates = current.suggester() != null
+                    ? current.suggester().suggest(sender, prefix, prev)
+                    : current.type().suggestions(sender, prefix);
 
-            if (rawSugs == null || rawSugs.isEmpty()) return List.of();
+            if (candidates == null || candidates.isEmpty()) return List.of();
 
-            // 2) prefix-filter with Bukkit's StringUtil to mimic vanilla behavior
-            List<String> out = new java.util.ArrayList<>(rawSugs.size());
-            StringUtil.copyPartialMatches(prefix, rawSugs, out);
+            // 3) Filter with Bukkit StringUtil for vanilla-like behavior
+            List<String> out = new ArrayList<>(candidates.size());
+            StringUtil.copyPartialMatches(prefix == null ? "" : prefix, candidates, out);
             return out;
         }
 
@@ -162,6 +191,10 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
     // root-level aliases (for /cmd itself)
     private final List<String> rootAliases = new ArrayList<>();
 
+    public RoutedCommand(String name, String permission) {
+        this(name, "", "/" + name, permission);
+    }
+
     protected RoutedCommand(String name, String description, String explicitUsage, String permission) {
         this.name = name;
         this.description = description != null ? description : "";
@@ -200,11 +233,15 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
     }
 
     @Override
-    public boolean execute(CommandSender sender, String label, String[] raw) {
+    public void execute(CommandSender sender, String label, String[] raw) {
         try {
             if (raw.length == 0) {
-                if (rootPlan.isDefined()) return rootPlan.handle(sender, raw, permission);
-                return onRoot(sender);
+                if (rootPlan.isDefined()) {
+                    rootPlan.handle(sender, raw, permission);
+                    return;
+                }
+                onRoot(sender);
+                return;
             }
 
             String first = raw[0];
@@ -217,21 +254,25 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
 
             if (matched != null) {
                 String[] rest = Arrays.copyOfRange(raw, 1, raw.length);
-                return matched.handle(sender, rest, null); // sub handles its own perm
+                matched.handle(sender, rest, null);
+                return; // sub handles its own perm
             }
 
-            if (rootPlan.isDefined()) return rootPlan.handle(sender, raw, permission);
-
-            return onUnknownSub(sender, raw[0]);
+            if (rootPlan.isDefined()) {
+                rootPlan.handle(sender, raw, permission);
+                return;
+            }
+            onUnknownSub(sender, raw[0]);
+            return;
 
         } catch (ArgParseException apx) {
             sender.sendMessage("§c" + apx.getMessage());
             sender.sendMessage("§7Usage: §f" + usage());
-            return true;
+            return;
         } catch (Throwable t) {
             sender.sendMessage("§cAn internal error occurred. See console.");
             t.printStackTrace();
-            return true;
+            return;
         }
     }
 
