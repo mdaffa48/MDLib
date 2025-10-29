@@ -172,6 +172,11 @@ public class ItemBuilder {
         return this;
     }
 
+    public ItemBuilder itemModel(NamespacedKey key){
+        this.meta.setItemModel(key);
+        return this;
+    }
+
     public ItemBuilder pdc(NamespacedKey key, String s){
         this.meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, s);
         return this;
@@ -300,6 +305,7 @@ public class ItemBuilder {
         String materialString = section.getString("material", "BARRIER");
         if (placeholder != null) materialString = placeholder.translate(materialString);
         Integer cmd = section.get("custom-model-data") == null ? null : section.getInt("custom-model-data");
+        String itemModel = section.getString("item-model") == null ? "" : section.getString("item-model");
         int amount = section.getInt("amount");
         String displayName = section.getString("display-name");
         List<String> lore = section.getStringList("lore");
@@ -368,6 +374,13 @@ public class ItemBuilder {
             });
         }
 
+        // set the item model
+        if (itemModel != null && isVersionAtLeast(1, 21, 4)) {
+            builder.itemModel(NamespacedKey.fromString(itemModel));
+        } else if (itemModel != null) {
+            Logger.warning("Item model is not supported on this version of Minecraft! Ignoring...");
+        }
+
         return builder;
     }
 
@@ -429,6 +442,23 @@ public class ItemBuilder {
             return true;
         } catch (IllegalArgumentException ex) {
             return false;
+        }
+    }
+
+    public static boolean isVersionAtLeast(int major, int minor, int patch) {
+        String version = Bukkit.getBukkitVersion().split("-")[0];
+        String[] parts = version.split("\\.");
+
+        try {
+            int maj = Integer.parseInt(parts[0]);
+            int min = Integer.parseInt(parts[1]);
+            int pat = parts.length > 2 ? Integer.parseInt(parts[2]) : 0;
+
+            if (maj != major) return maj > major;
+            if (min != minor) return min > minor;
+            return pat >= patch;
+        } catch (NumberFormatException e) {
+            return false; // fallback
         }
     }
 
