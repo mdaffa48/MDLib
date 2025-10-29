@@ -22,7 +22,7 @@ public class FoliaExecutor {
      * });
      * ```
      */
-    public ScheduledTask runTask(Consumer<ScheduledTask> runnable) {
+    public static ScheduledTask runTask(Consumer<ScheduledTask> runnable) {
         return Bukkit.getGlobalRegionScheduler().run(MDLib.instance(), runnable);
     }
 
@@ -40,7 +40,7 @@ public class FoliaExecutor {
      * }, 20);
      * ```
      */
-    public ScheduledTask runTaskLater(Consumer<ScheduledTask> runnable, long delay) {
+    public static ScheduledTask runTaskLater(Consumer<ScheduledTask> runnable, long delay) {
         return Bukkit.getGlobalRegionScheduler().runDelayed(MDLib.instance(), runnable, delay);
     }
 
@@ -59,7 +59,7 @@ public class FoliaExecutor {
      * }, 20, 20);
      * ```
      */
-    public ScheduledTask runTaskTimer(Consumer<ScheduledTask> runnable, long delay, long period) {
+    public static ScheduledTask runTaskTimer(Consumer<ScheduledTask> runnable, long delay, long period) {
         return Bukkit.getGlobalRegionScheduler().runAtFixedRate(MDLib.instance(), runnable, delay, period);
     }
 
@@ -76,7 +76,7 @@ public class FoliaExecutor {
      * });
      * ```
      */
-    public ScheduledTask runTaskAsynchronously(Consumer<ScheduledTask> runnable) {
+    public static ScheduledTask runTaskAsynchronously(Consumer<ScheduledTask> runnable) {
         return Bukkit.getAsyncScheduler().runNow(MDLib.instance(), runnable);
     }
 
@@ -95,7 +95,7 @@ public class FoliaExecutor {
      * }, 20, TimeUnit.MILLISECONDS);
      * ```
      */
-    public ScheduledTask runTaskLaterAsynchronously(Consumer<ScheduledTask> runnable, long delay, TimeUnit timeUnit) {
+    public static ScheduledTask runTaskLaterAsynchronously(Consumer<ScheduledTask> runnable, long delay, TimeUnit timeUnit) {
         return Bukkit.getAsyncScheduler().runDelayed(MDLib.instance(), runnable, delay, timeUnit);
     }
 
@@ -115,7 +115,7 @@ public class FoliaExecutor {
      * }, 20, 20, TimeUnit.MILLISECONDS);
      * ```
      */
-    public ScheduledTask runTaskTimerAsynchronously(Consumer<ScheduledTask> runnable, long delay, long period, TimeUnit timeUnit) {
+    public static ScheduledTask runTaskTimerAsynchronously(Consumer<ScheduledTask> runnable, long delay, long period, TimeUnit timeUnit) {
         return Bukkit.getAsyncScheduler().runAtFixedRate(MDLib.instance(), runnable, delay, period, timeUnit);
     }
 }
