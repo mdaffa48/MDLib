@@ -15,30 +15,30 @@ public class FoliaExecutor {
      * @param runnable It needs to accept a {@link ScheduledTask} as a parameter.
      * @return ScheduledTask
      *
-     * Example:
-     * ```java
-     * FoliaExecutor.runTask(task -> {
-     *     // Your code here
-     * });
-     * ```
+     * <p><b>Example:</b></p>
+     *      * <pre>{@code
+     *      * FoliaExecutor.runTask(task -> {
+     *      *     // Your code here
+     *      * });
+     *      * }</pre>
      */
     public static ScheduledTask runTask(Consumer<ScheduledTask> runnable) {
         return Bukkit.getGlobalRegionScheduler().run(MDLib.instance(), runnable);
     }
 
     /**
-     * Run a task on the main thread after a delay.
+     * Runs a task on the main server thread after a specified delay.
      *
-     * @param runnable It needs to accept a {@link ScheduledTask} as a parameter.
-     * @param delay Delay in ticks.
-     * @return ScheduledTask
+     * @param runnable the task to run; it accepts a {@link ScheduledTask} as its parameter
+     * @param delay the delay before execution, in ticks
+     * @return the {@link ScheduledTask} representing the scheduled task
      *
-     * Example:
-     * ```java
+     * <p><b>Example:</b></p>
+     * <pre>{@code
      * FoliaExecutor.runTaskLater(task -> {
      *     // Your code here
      * }, 20);
-     * ```
+     * }</pre>
      */
     public static ScheduledTask runTaskLater(Consumer<ScheduledTask> runnable, long delay) {
         return Bukkit.getGlobalRegionScheduler().runDelayed(MDLib.instance(), runnable, delay);
@@ -52,12 +52,12 @@ public class FoliaExecutor {
      * @param period Period in ticks.
      * @return ScheduledTask
      *
-     * Example:
-     * ```java
-     * FoliaExecutor.runTaskTimer(task -> {
-     *     // Your code here
-     * }, 20, 20);
-     * ```
+     * <p><b>Example:</b></p>
+     *      * <pre>{@code
+     *      * FoliaExecutor.runTaskTimer(task -> {
+     *      *     // Your code here
+     *      * }, 20, 20);
+     *      * }</pre>
      */
     public static ScheduledTask runTaskTimer(Consumer<ScheduledTask> runnable, long delay, long period) {
         return Bukkit.getGlobalRegionScheduler().runAtFixedRate(MDLib.instance(), runnable, delay, period);
@@ -69,12 +69,12 @@ public class FoliaExecutor {
      * @param runnable It needs to accept a {@link ScheduledTask} as a parameter.
      * @return ScheduledTask
      *
-     * Example:
-     * ```java
-     * FoliaExecutor.runTaskAsynchronously(task -> {
-     *     // Your code here
-     * });
-     * ```
+     * <p><b>Example:</b></p>
+     *      * <pre>{@code
+     *      * FoliaExecutor.runTaskAsynchronously(task -> {
+     *      *     // Your code here
+     *      * });
+     *      * }</pre>
      */
     public static ScheduledTask runTaskAsynchronously(Consumer<ScheduledTask> runnable) {
         return Bukkit.getAsyncScheduler().runNow(MDLib.instance(), runnable);
@@ -88,12 +88,12 @@ public class FoliaExecutor {
      * @param timeUnit Time unit.
      * @return ScheduledTask
      *
-     * Example:
-     * ```java
-     * FoliaExecutor.runTaskLaterAsynchronously(task -> {
-     *     // Your code here
-     * }, 20, TimeUnit.MILLISECONDS);
-     * ```
+     * <p><b>Example:</b></p>
+     *      * <pre>{@code
+     *      * FoliaExecutor.runTaskLaterAsynchronously(task -> {
+     *      *     // Your code here
+     *      * }, 20, TimeUnit.MILLISECONDS);
+     *      * }</pre>
      */
     public static ScheduledTask runTaskLaterAsynchronously(Consumer<ScheduledTask> runnable, long delay, TimeUnit timeUnit) {
         return Bukkit.getAsyncScheduler().runDelayed(MDLib.instance(), runnable, delay, timeUnit);
@@ -108,12 +108,12 @@ public class FoliaExecutor {
      * @param timeUnit Time unit.
      * @return ScheduledTask
      *
-     * Example:
-     * ```java
-     * FoliaExecutor.runTaskTimerAsynchronously(task -> {
-     *     // Your code here
-     * }, 20, 20, TimeUnit.MILLISECONDS);
-     * ```
+     * <p><b>Example:</b></p>
+     *      * <pre>{@code
+     *      * FoliaExecutor.runTaskTimerAsynchronously(task -> {
+     *      *     // Your code here
+     *      * }, 20, 20, TimeUnit.MILLISECONDS);
+     *      * }</pre>
      */
     public static ScheduledTask runTaskTimerAsynchronously(Consumer<ScheduledTask> runnable, long delay, long period, TimeUnit timeUnit) {
         return Bukkit.getAsyncScheduler().runAtFixedRate(MDLib.instance(), runnable, delay, period, timeUnit);
