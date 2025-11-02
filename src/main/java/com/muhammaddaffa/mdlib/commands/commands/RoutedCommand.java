@@ -30,6 +30,11 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
         public boolean isRoot() { return literal == null; }
         public boolean isDefined() { return handler != null; }
 
+        public CommandPlan alias(List<String> names) {
+            if (!isRoot()) aliases.addAll(names);
+            return this;
+        }
+
         public CommandPlan alias(String... names) {
             if (!isRoot()) aliases.addAll(Arrays.asList(names));
             return this;
@@ -202,7 +207,11 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
         this.permission = permission;
     }
 
-    /** Add root command aliases (e.g., /hello, /hi, /hey). */
+    public RoutedCommand alias(List<String> names) {
+        rootAliases.addAll(names);
+        return this;
+    }
+
     public RoutedCommand alias(String... names) {
         rootAliases.addAll(Arrays.asList(names));
         return this;
