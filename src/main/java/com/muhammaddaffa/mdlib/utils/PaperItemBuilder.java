@@ -5,8 +5,11 @@ import com.cryptomorin.xseries.profiles.objects.ProfileInputType;
 import com.cryptomorin.xseries.profiles.objects.Profileable;
 import com.nexomc.nexo.api.NexoItems;
 import dev.lone.itemsadder.api.CustomStack;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.ItemLore;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import me.clip.placeholderapi.PlaceholderAPI;
+import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -18,6 +21,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -28,16 +32,16 @@ import java.util.function.Consumer;
  *
  * @author MrMicky
  */
-public class ItemBuilder {
+public class PaperItemBuilder {
 
-    private final ItemStack item;
-    private final ItemMeta meta;
+    private ItemStack item;
+    private ItemMeta meta;
 
-    public ItemBuilder(Material material) {
+    public PaperItemBuilder(Material material) {
         this(new ItemStack(material));
     }
 
-    public ItemBuilder(ItemStack item) {
+    public PaperItemBuilder(@NotNull ItemStack item) {
         this.item = Objects.requireNonNull(item, "item");
         this.meta = item.getItemMeta();
 
@@ -50,77 +54,78 @@ public class ItemBuilder {
         return meta;
     }
 
-    public ItemBuilder type(Material material) {
-        this.item.setType(material);
+    public PaperItemBuilder type(@NotNull Material material) {
+        this.item = this.item.withType(material);
+        this.meta = this.item.getItemMeta();
         return this;
     }
 
-    public ItemBuilder data(int data) {
-        return durability((short) data);
-    }
-
-    @Deprecated
-    public ItemBuilder durability(short durability) {
-        this.item.setDurability(durability);
+    public PaperItemBuilder durability(int durability) {
+        this.item.setData(DataComponentTypes.DAMAGE, durability);
         return this;
     }
 
-    public ItemBuilder amount(int amount) {
+    public PaperItemBuilder amount(int amount) {
         this.item.setAmount(amount);
         return this;
     }
 
-    public ItemBuilder enchant(Enchantment enchantment) {
+    public PaperItemBuilder enchant(Enchantment enchantment) {
         return enchant(enchantment, 1);
     }
 
-    public ItemBuilder enchant(Enchantment enchantment, int level) {
-        this.meta.addEnchant(enchantment, level, true);
+    public PaperItemBuilder enchant(Enchantment enchantment, int level) {
+        this.item.addEnchantment(enchantment, level);
         return this;
     }
 
-    public ItemBuilder removeEnchant(Enchantment enchantment) {
-        this.meta.removeEnchant(enchantment);
+    public PaperItemBuilder removeEnchant(Enchantment enchantment) {
+        this.item.removeEnchantment(enchantment);
         return this;
     }
 
-    public ItemBuilder removeEnchants() {
-        this.meta.getEnchants().keySet().forEach(this.meta::removeEnchant);
+    public PaperItemBuilder removeEnchants() {
+        this.item.getEnchantments().keySet().forEach(this.meta::removeEnchant);
         return this;
     }
 
-    public ItemBuilder meta(Consumer<ItemMeta> metaConsumer) {
+    public PaperItemBuilder meta(Consumer<ItemMeta> metaConsumer) {
         metaConsumer.accept(this.meta);
         return this;
     }
 
-    public <T extends ItemMeta> ItemBuilder meta(Class<T> metaClass, Consumer<T> metaConsumer) {
+    public <T extends ItemMeta> PaperItemBuilder meta(Class<T> metaClass, Consumer<T> metaConsumer) {
         if (metaClass.isInstance(this.meta)) {
             metaConsumer.accept(metaClass.cast(this.meta));
         }
         return this;
     }
 
-    public ItemBuilder name(String name) {
-        this.meta.setDisplayName(Common.color(name));
+    public PaperItemBuilder name(String name) {
+        this.meta.displayName(ColorComponent.colorToComponent(name));
         return this;
     }
 
-    public ItemBuilder lore(String lore) {
+    public PaperItemBuilder name(Component name) {
+        this.meta.displayName(name);
+        return this;
+    }
+
+    public PaperItemBuilder lore(Component lore) {
         return lore(Collections.singletonList(lore));
     }
 
-    public ItemBuilder lore(String... lore) {
+    public PaperItemBuilder lore(Component... lore) {
         return lore(Arrays.asList(lore));
     }
 
-    public ItemBuilder lore(List<String> lore) {
-        this.meta.setLore(Common.color(lore));
+    public PaperItemBuilder lore(List<Component> lore) {
+        this.item.setData(DataComponentTypes.LORE, ItemLore.lore(lore));
         return this;
     }
 
-    public ItemBuilder addLore(String line) {
-        List<String> lore = this.meta.getLore();
+    public PaperItemBuilder addLore(Component line) {
+        List<Component> lore = this.item.lore();
 
         if (lore == null) {
             return lore(line);
@@ -130,12 +135,12 @@ public class ItemBuilder {
         return lore(lore);
     }
 
-    public ItemBuilder addLore(String... lines) {
+    public PaperItemBuilder addLore(Component... lines) {
         return addLore(Arrays.asList(lines));
     }
 
-    public ItemBuilder addLore(List<String> lines) {
-        List<String> lore = this.meta.getLore();
+    public PaperItemBuilder addLore(List<Component> lines) {
+        List<Component> lore = this.item.lore();
 
         if (lore == null) {
             return lore(lines);
@@ -145,118 +150,123 @@ public class ItemBuilder {
         return lore(lore);
     }
 
-    public ItemBuilder flags(ItemFlag... flags) {
-        this.meta.addItemFlags(flags);
+    public PaperItemBuilder flags(ItemFlag... flags) {
+        this.item.addItemFlags(flags);
         return this;
     }
 
-    public ItemBuilder flags() {
+    public PaperItemBuilder flags() {
         return flags(ItemFlag.values());
     }
 
-    public ItemBuilder removeFlags(ItemFlag... flags) {
-        this.meta.removeItemFlags(flags);
+    public PaperItemBuilder removeFlags(ItemFlag... flags) {
+        this.item.removeItemFlags(flags);
         return this;
     }
 
-    public ItemBuilder removeFlags() {
+    public PaperItemBuilder removeFlags() {
         return removeFlags(ItemFlag.values());
     }
 
-    public ItemBuilder armorColor(Color color) {
+    public PaperItemBuilder armorColor(Color color) {
         return meta(LeatherArmorMeta.class, m -> m.setColor(color));
     }
 
-    public ItemBuilder customModelData(int data){
+    @Deprecated(since = "1.21.5")
+    public PaperItemBuilder customModelData(int data){
         this.meta.setCustomModelData(data);
         return this;
     }
 
-    public ItemBuilder itemModel(NamespacedKey key){
+    public PaperItemBuilder itemModel(NamespacedKey key){
         this.meta.setItemModel(key);
         return this;
     }
 
-    public ItemBuilder pdc(NamespacedKey key, String s){
-        this.meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, s);
+    public PaperItemBuilder pdc(NamespacedKey key, String s){
+        this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.STRING, s));
         return this;
     }
 
-    public ItemBuilder pdc(NamespacedKey key, Double d){
-        this.meta.getPersistentDataContainer().set(key, PersistentDataType.DOUBLE, d);
+    public PaperItemBuilder pdc(NamespacedKey key, Double d){
+        this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.DOUBLE, d));
         return this;
     }
 
-    public ItemBuilder pdc(NamespacedKey key, Float f){
-        this.meta.getPersistentDataContainer().set(key, PersistentDataType.FLOAT, f);
+    public PaperItemBuilder pdc(NamespacedKey key, Float f){
+        this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.FLOAT, f));
         return this;
     }
 
-    public ItemBuilder pdc(NamespacedKey key, Integer i){
-        this.meta.getPersistentDataContainer().set(key, PersistentDataType.INTEGER, i);
+    public PaperItemBuilder pdc(NamespacedKey key, Integer i){
+        this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.INTEGER, i));
         return this;
     }
 
-    public ItemBuilder pdc(NamespacedKey key, Long l){
-        this.meta.getPersistentDataContainer().set(key, PersistentDataType.LONG, l);
+    public PaperItemBuilder pdc(NamespacedKey key, Long l){
+        this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.LONG, l));
         return this;
     }
 
-    public ItemBuilder pdc(NamespacedKey key, Byte b){
-        this.meta.getPersistentDataContainer().set(key, PersistentDataType.BYTE, b);
+    public PaperItemBuilder pdc(NamespacedKey key, Byte b){
+        this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.BYTE, b));
         return this;
     }
 
-    public ItemBuilder skull(String identifier){
+    public PaperItemBuilder skull(String identifier){
         ProfileInputType input = ProfileInputType.typeOf(identifier);
         if (input != null)
-            XSkull.of(this.meta).profile(Profileable.of(input, identifier)).apply();
+            XSkull.of(this.item).profile(Profileable.of(input, identifier)).apply();
         return this;
     }
 
-    public ItemBuilder skull(OfflinePlayer identifier){
-        XSkull.of(this.meta).profile(Profileable.of(identifier)).apply();
+    public PaperItemBuilder skull(OfflinePlayer identifier){
+        XSkull.of(this.item).profile(Profileable.of(identifier)).apply();
         return this;
     }
 
-    public ItemBuilder skull(UUID identifier){
-        XSkull.of(this.meta).profile(Profileable.of(identifier)).apply();
+    public PaperItemBuilder skull(UUID identifier){
+        XSkull.of(this.item).profile(Profileable.of(identifier)).apply();
         return this;
     }
 
-    public ItemBuilder placeholder(Placeholder placeholder) {
-        this.name(placeholder.translate(this.meta.getDisplayName()));
-        if (this.meta.getLore() != null) {
-            this.lore(placeholder.translate(this.meta.getLore()));
+    public PaperItemBuilder placeholder(PlaceholderComponent placeholder) {
+        Component currentName = this.item.displayName();
+        if (currentName != null) {
+            this.name(placeholder.translate(currentName));
+        }
+        List<Component> currentLore = this.item.lore();
+        if (currentLore != null) {
+            this.lore(placeholder.translate(currentLore));
         }
         return this;
     }
 
-    public ItemBuilder attribute(Material material, EquipmentSlot slot) {
+    public PaperItemBuilder attribute(Material material, EquipmentSlot slot) {
         this.meta.setAttributeModifiers(material.getDefaultAttributeModifiers(slot));
         return this;
     }
 
-    public ItemBuilder loreCustom(String key, String replacer) {
+    public PaperItemBuilder loreCustom(String key, Component replacer) {
         return loreCustom(key, replacer, null);
     }
 
-    public ItemBuilder loreCustom(String key, String replacer, @Nullable Placeholder placeholder) {
+    public PaperItemBuilder loreCustom(String key, Component replacer, @Nullable PlaceholderComponent placeholder) {
         return loreCustom(key, List.of(replacer), placeholder);
     }
 
-    public ItemBuilder loreCustom(String key, List<String> replacer) {
+    public PaperItemBuilder loreCustom(String key, List<Component> replacer) {
         return loreCustom(key, replacer, null);
     }
 
-    public ItemBuilder loreCustom(String key, List<String> replacer, @Nullable Placeholder placeholder) {
-        List<String> lore = new ArrayList<>();
+    public PaperItemBuilder loreCustom(String key, List<Component> replacer, @Nullable PlaceholderComponent placeholder) {
+        List<Component> lore = new ArrayList<>();
         // Check if the placeholder is not null
         if (placeholder != null) replacer = placeholder.translate(replacer);
         // Get the lore
-        if (meta != null && meta.getLore() != null) {
-            for (String line : meta.getLore()) {
-                if (line.contains(key)) {
+        if (item.lore() != null) {
+            for (Component line : item.lore()) {
+                if (line.contains(Component.text(key))) {
                     lore.addAll(replacer);
                     continue;
                 }

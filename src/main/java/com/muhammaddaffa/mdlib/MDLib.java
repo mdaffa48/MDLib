@@ -118,6 +118,19 @@ public final class MDLib {
         }
     }
 
+    /**
+     * Check if the server is using Folia
+     * @return true if the server is using Folia, false otherwise
+     */
+    public static boolean isFolia() {
+        try {
+            Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
+            return true;
+        } catch (ClassNotFoundException ignored) {
+            return false;
+        }
+    }
+
     public static JavaPlugin instance() {
         return instance;
     }
