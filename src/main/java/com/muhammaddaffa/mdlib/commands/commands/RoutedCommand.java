@@ -13,7 +13,7 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
 
     @FunctionalInterface
     public interface Handler {
-        boolean run(CommandSender sender, CommandContext ctx) throws Exception;
+        void run(CommandSender sender, CommandContext ctx) throws Exception;
     }
 
     public static final class CommandPlan {
@@ -100,7 +100,8 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
                 Object parsed = p.type.parse(sender, tr);
                 ctx.put(p.name, parsed);
             }
-            return handler.run(sender, ctx);
+            handler.run(sender, ctx);
+            return true;
         }
 
         private List<String> tab(CommandSender sender, String[] raw) {
