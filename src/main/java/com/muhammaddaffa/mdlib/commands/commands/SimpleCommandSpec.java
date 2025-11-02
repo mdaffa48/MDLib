@@ -1,5 +1,6 @@
 package com.muhammaddaffa.mdlib.commands.commands;
 
+import com.muhammaddaffa.mdlib.MDLib;
 import org.bukkit.command.CommandSender;
 
 import java.util.Collections;
@@ -11,6 +12,10 @@ public interface SimpleCommandSpec {
     default String description() { return ""; }
     default String usage() { return "/" + name(); }
     default String permission() { return null; }
+
+    default void register() {
+        MDLib.getCommandRegistry().register(this);
+    }
 
     void execute(CommandSender sender, String label, String[] args);
 

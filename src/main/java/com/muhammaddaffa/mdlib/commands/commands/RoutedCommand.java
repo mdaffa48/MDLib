@@ -13,7 +13,7 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
 
     @FunctionalInterface
     public interface Handler {
-        boolean run(CommandSender sender, CommandContext ctx) throws Exception;
+        void run(CommandSender sender, CommandContext ctx) throws Exception;
     }
 
     public static final class CommandPlan {
@@ -29,6 +29,11 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
         public String permission() { return permission; }
         public boolean isRoot() { return literal == null; }
         public boolean isDefined() { return handler != null; }
+
+        public CommandPlan alias(List<String> names) {
+            if (!isRoot()) aliases.addAll(names);
+            return this;
+        }
 
         public CommandPlan alias(String... names) {
             if (!isRoot()) aliases.addAll(Arrays.asList(names));
@@ -95,7 +100,8 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
                 Object parsed = p.type.parse(sender, tr);
                 ctx.put(p.name, parsed);
             }
-            return handler.run(sender, ctx);
+            handler.run(sender, ctx);
+            return true;
         }
 
         private List<String> tab(CommandSender sender, String[] raw) {
@@ -202,7 +208,11 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
         this.permission = permission;
     }
 
-    /** Add root command aliases (e.g., /hello, /hi, /hey). */
+    public RoutedCommand alias(List<String> names) {
+        rootAliases.addAll(names);
+        return this;
+    }
+
     public RoutedCommand alias(String... names) {
         rootAliases.addAll(Arrays.asList(names));
         return this;
