@@ -17,6 +17,7 @@ public final class MDLib {
 
     private static JavaPlugin instance;
 
+    public static boolean LISTEN_VAULT = true;
     public static boolean LISTEN_WORLDGUARD = false;
     public static boolean CUSTOM_BLOCK_DATA = false;
 
@@ -74,7 +75,7 @@ public final class MDLib {
         }
 
         // If using vault, register the VaultEconomy
-        if (VAULT) {
+        if (VAULT && LISTEN_VAULT) {
             VaultEconomy.init();
         }
 
