@@ -263,10 +263,11 @@ public class Common {
     }
 
     public static String papi(Player player, String message) {
-        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") == null) {
+        try {
+            return PlaceholderAPI.setPlaceholders(player, message);
+        } catch (Exception ex) {
             return message;
         }
-        return PlaceholderAPI.setPlaceholders(player, message);
     }
 
 }
