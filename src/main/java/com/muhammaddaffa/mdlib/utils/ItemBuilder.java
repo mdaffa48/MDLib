@@ -377,8 +377,6 @@ public class ItemBuilder {
         // set the item model
         if (itemModel != null && isVersionAtLeast(1, 21, 4)) {
             builder.itemModel(NamespacedKey.fromString(itemModel));
-        } else if (itemModel != null) {
-            Logger.warning("Item model is not supported on this version of Minecraft! Ignoring...");
         }
 
         return builder;
