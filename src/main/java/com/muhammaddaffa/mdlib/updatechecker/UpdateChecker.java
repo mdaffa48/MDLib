@@ -20,12 +20,10 @@ package com.muhammaddaffa.mdlib.updatechecker;
 
 import com.muhammaddaffa.mdlib.task.ExecutorManager;
 import com.muhammaddaffa.mdlib.task.handleTask.HandleTask;
-import com.muhammaddaffa.mdlib.utils.Executor;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -324,7 +322,7 @@ public class UpdateChecker {
             userAgentString = UserAgentBuilder.getDefaultUserAgent().build();
         }
 
-        Executor.async(() -> {
+        ExecutorManager.getProvider().async(() -> {
 
             UpdateCheckEvent updateCheckEvent;
 
@@ -349,12 +347,12 @@ public class UpdateChecker {
                 updateCheckEvent = new UpdateCheckEvent(UpdateCheckSuccess.SUCCESS);
             } catch (final IOException exception) {
                 updateCheckEvent = new UpdateCheckEvent(UpdateCheckSuccess.FAIL);
-                Executor.sync(() -> getOnFail().accept(requesters, exception));
+                ExecutorManager.getProvider().sync(() -> getOnFail().accept(requesters, exception));
             }
 
             UpdateCheckEvent finalUpdateCheckEvent = updateCheckEvent.setRequesters(requesters);
 
-            Executor.sync(() -> {
+            ExecutorManager.getProvider().sync(() -> {
 
                 if (finalUpdateCheckEvent.getSuccess() == UpdateCheckSuccess.SUCCESS) {
                     getOnSuccess().accept(requesters, latestVersion);
