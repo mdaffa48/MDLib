@@ -18,6 +18,8 @@
 
 package com.muhammaddaffa.mdlib.updatechecker;
 
+import com.muhammaddaffa.mdlib.task.ExecutorManager;
+import com.muhammaddaffa.mdlib.task.handleTask.HandleTask;
 import com.muhammaddaffa.mdlib.utils.Executor;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -84,7 +86,7 @@ public class UpdateChecker {
     };
     private String paidDownloadLink = null;
     @Nullable
-    private BukkitTask updaterTask = null;
+    private HandleTask updaterTask = null;
     private int timeout = 0;
     private String usedVersion;
     private String userAgentString = null;
@@ -282,7 +284,7 @@ public class UpdateChecker {
         long ticks = ((int) seconds) * 20L;
         stop();
         if (ticks > 0) {
-            updaterTask = Executor.syncTimer(ticks, ticks, () -> checkNow(Bukkit.getConsoleSender()));
+            updaterTask = ExecutorManager.getProvider().syncTimer(ticks, ticks, () -> checkNow(Bukkit.getConsoleSender()));
         } else {
             updaterTask = null;
         }
