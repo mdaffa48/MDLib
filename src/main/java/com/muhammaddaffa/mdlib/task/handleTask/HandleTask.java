@@ -24,6 +24,14 @@ public class HandleTask {
         }
     }
 
+    public boolean isCancelled() {
+        if (foliaTask != null) {
+            return foliaTask.isCancelled();
+        } else {
+            return bukkitTask.isCancelled();
+        }
+    }
+
     public Object getRaw() {
         return foliaTask != null ? foliaTask : bukkitTask;
     }
