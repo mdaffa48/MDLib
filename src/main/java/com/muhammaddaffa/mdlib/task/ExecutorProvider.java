@@ -5,6 +5,7 @@ import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public interface ExecutorProvider {
@@ -47,7 +48,7 @@ public interface ExecutorProvider {
      * @param delay
      * @param runnable
      */
-    HandleTask asyncLater(long delay, Runnable runnable);
+    HandleTask asyncLater(long delay, Runnable runnable, TimeUnit timeUnit);
 
     /**
      * Run a task asynchronously after a delay and repeat it.
@@ -56,7 +57,7 @@ public interface ExecutorProvider {
      * @param runEvery
      * @param runnable
      */
-    HandleTask asyncTimer(long delay, long runEvery, Runnable runnable);
+    HandleTask asyncTimer(long delay, long runEvery, Runnable runnable, TimeUnit timeUnit);
 
     /**
      * Run a task on the region's thread.
