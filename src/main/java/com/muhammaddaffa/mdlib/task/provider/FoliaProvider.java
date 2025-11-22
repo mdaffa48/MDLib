@@ -12,6 +12,10 @@ import java.util.function.Consumer;
 
 public class FoliaProvider implements ExecutorProvider {
 
+    private long ticksToMs(long ticks) {
+        return ticks * 50;
+    }
+
     @Override
     public HandleTask sync(Runnable runnable) {
         return new HandleTask(Bukkit.getGlobalRegionScheduler().run(MDLib.instance(), task -> runnable.run()));
@@ -19,12 +23,12 @@ public class FoliaProvider implements ExecutorProvider {
 
     @Override
     public HandleTask syncLater(long delay, Runnable runnable) {
-        return new HandleTask(Bukkit.getGlobalRegionScheduler().runDelayed(MDLib.instance(), task -> runnable.run(), delay));
+        return new HandleTask(Bukkit.getGlobalRegionScheduler().runDelayed(MDLib.instance(), task -> runnable.run(), ticksToMs(delay)));
     }
 
     @Override
     public HandleTask syncTimer(long delay, long runEvery, Runnable runnable) {
-        return new HandleTask(Bukkit.getGlobalRegionScheduler().runAtFixedRate(MDLib.instance(), task -> runnable.run(), delay, runEvery));
+        return new HandleTask(Bukkit.getGlobalRegionScheduler().runAtFixedRate(MDLib.instance(), task -> runnable.run(), ticksToMs(delay), ticksToMs(runEvery)));
     }
 
     @Override
@@ -34,12 +38,12 @@ public class FoliaProvider implements ExecutorProvider {
 
     @Override
     public HandleTask asyncLater(long delay, Runnable runnable) {
-        return new HandleTask(Bukkit.getAsyncScheduler().runDelayed(MDLib.instance(), task -> runnable.run(), delay, TimeUnit.MILLISECONDS));
+        return new HandleTask(Bukkit.getAsyncScheduler().runDelayed(MDLib.instance(), task -> runnable.run(), ticksToMs(delay), TimeUnit.MILLISECONDS));
     }
 
     @Override
     public HandleTask asyncTimer(long delay, long runEvery, Runnable runnable) {
-        return new HandleTask(Bukkit.getAsyncScheduler().runAtFixedRate(MDLib.instance(), task -> runnable.run(), delay, runEvery, TimeUnit.MILLISECONDS));
+        return new HandleTask(Bukkit.getAsyncScheduler().runAtFixedRate(MDLib.instance(), task -> runnable.run(), ticksToMs(delay), ticksToMs(runEvery), TimeUnit.MILLISECONDS));
     }
 
     // Optional Method
@@ -51,12 +55,12 @@ public class FoliaProvider implements ExecutorProvider {
 
     @Override
     public HandleTask regionLater(World world, int chunkX, int chunkZ, long delay, Runnable runnable) {
-        return new HandleTask(Bukkit.getRegionScheduler().runDelayed(MDLib.instance(), world, chunkX, chunkZ, task -> runnable.run(), delay));
+        return new HandleTask(Bukkit.getRegionScheduler().runDelayed(MDLib.instance(), world, chunkX, chunkZ, task -> runnable.run(), ticksToMs(delay)));
     }
 
     @Override
     public HandleTask regionTimer(World world, int chunkX, int chunkZ, long delay, long runEvery, Runnable runnable) {
-        return new HandleTask(Bukkit.getRegionScheduler().runAtFixedRate(MDLib.instance(), world, chunkX, chunkZ, task -> runnable.run(), delay, runEvery));
+        return new HandleTask(Bukkit.getRegionScheduler().runAtFixedRate(MDLib.instance(), world, chunkX, chunkZ, task -> runnable.run(), ticksToMs(delay), ticksToMs(runEvery)));
     }
 
     @Override
@@ -72,7 +76,7 @@ public class FoliaProvider implements ExecutorProvider {
         return new HandleTask(Bukkit.getGlobalRegionScheduler().runDelayed(MDLib.instance(), task -> {
             consumer.accept(task);
             runnable.run();
-        }, delay));
+        }, ticksToMs(delay)));
     }
 
     @Override
@@ -80,6 +84,6 @@ public class FoliaProvider implements ExecutorProvider {
         return new HandleTask(Bukkit.getGlobalRegionScheduler().runAtFixedRate(MDLib.instance(), task -> {
             consumer.accept(task);
             runnable.run();
-        }, delay, runEvery));
+        }, ticksToMs(delay), ticksToMs(runEvery)));
     }
 }
