@@ -30,12 +30,12 @@ public class BukkitProvider implements ExecutorProvider {
     }
 
     @Override
-    public HandleTask asyncLater(long delay, Runnable runnable, TimeUnit timeUnit) {
+    public HandleTask asyncLater(long delay, Runnable runnable) {
         return new HandleTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MDLib.instance(), runnable, delay));
     }
 
     @Override
-    public HandleTask asyncTimer(long delay, long runEvery, Runnable runnable, TimeUnit timeUnit) {
+    public HandleTask asyncTimer(long delay, long runEvery, Runnable runnable) {
         return new HandleTask(Bukkit.getScheduler().runTaskTimerAsynchronously(MDLib.instance(), runnable, delay, runEvery));
     }
 }

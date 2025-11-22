@@ -48,7 +48,7 @@ public interface ExecutorProvider {
      * @param delay
      * @param runnable
      */
-    HandleTask asyncLater(long delay, Runnable runnable, TimeUnit timeUnit);
+    HandleTask asyncLater(long delay, Runnable runnable);
 
     /**
      * Run a task asynchronously after a delay and repeat it.
@@ -57,7 +57,7 @@ public interface ExecutorProvider {
      * @param runEvery
      * @param runnable
      */
-    HandleTask asyncTimer(long delay, long runEvery, Runnable runnable, TimeUnit timeUnit);
+    HandleTask asyncTimer(long delay, long runEvery, Runnable runnable);
 
     /**
      * Run a task on the region's thread.

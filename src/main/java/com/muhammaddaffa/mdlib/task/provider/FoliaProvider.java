@@ -33,13 +33,13 @@ public class FoliaProvider implements ExecutorProvider {
     }
 
     @Override
-    public HandleTask asyncLater(long delay, Runnable runnable, TimeUnit timeUnit) {
-        return new HandleTask(Bukkit.getAsyncScheduler().runDelayed(MDLib.instance(), task -> runnable.run(), delay, timeUnit));
+    public HandleTask asyncLater(long delay, Runnable runnable) {
+        return new HandleTask(Bukkit.getAsyncScheduler().runDelayed(MDLib.instance(), task -> runnable.run(), delay, TimeUnit.MILLISECONDS));
     }
 
     @Override
-    public HandleTask asyncTimer(long delay, long runEvery, Runnable runnable, TimeUnit timeUnit) {
-        return new HandleTask(Bukkit.getAsyncScheduler().runAtFixedRate(MDLib.instance(), task -> runnable.run(), delay, runEvery, timeUnit));
+    public HandleTask asyncTimer(long delay, long runEvery, Runnable runnable) {
+        return new HandleTask(Bukkit.getAsyncScheduler().runAtFixedRate(MDLib.instance(), task -> runnable.run(), delay, runEvery, TimeUnit.MILLISECONDS));
     }
 
     // Optional Method
