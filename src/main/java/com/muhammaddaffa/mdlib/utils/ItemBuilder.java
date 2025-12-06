@@ -5,8 +5,16 @@ import com.cryptomorin.xseries.profiles.objects.ProfileInputType;
 import com.cryptomorin.xseries.profiles.objects.Profileable;
 import com.nexomc.nexo.api.NexoItems;
 import dev.lone.itemsadder.api.CustomStack;
+import io.lumine.mythic.bukkit.BukkitAdapter;
+import io.lumine.mythic.bukkit.MythicBukkit;
+import io.lumine.mythic.core.items.MythicItem;
+import io.lumine.mythic.lib.api.item.NBTItem;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import me.clip.placeholderapi.PlaceholderAPI;
+import net.Indyuce.mmoitems.MMOItems;
+import net.Indyuce.mmoitems.api.MMOItemsAPI;
+import net.Indyuce.mmoitems.api.Type;
+import net.Indyuce.mmoitems.api.item.mmoitem.MMOItem;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -383,40 +391,57 @@ public class ItemBuilder {
     }
 
     public static ItemBuilder retrieveItemBuilder(String materialString) {
-        String[] parts  = materialString.split(";", 2);
-        String id       = parts[0].trim();
-        String val      = parts.length > 1 ? parts[1].trim() : "";
+        ParsedType type = parseType(materialString);
 
-        if (parts.length == 2) {
-            switch (id.toLowerCase()) {
-                case "head":
-                    return new ItemBuilder(Material.PLAYER_HEAD)
-                            .skull(val);
-                case "nexo":
-                    if (Bukkit.getPluginManager().isPluginEnabled("Nexo")) {
-                        return NexoItems
-                                .optionalItemFromId(val)
-                                .map(nb -> new ItemBuilder(nb.build()))
-                                .orElseGet(() -> new ItemBuilder(Material.DIRT));
+        switch (type.namespace().toLowerCase()) {
+            case "head" -> {
+                return new ItemBuilder(Material.PLAYER_HEAD)
+                        .skull(type.value());
+            }
+            case "nexo" -> {
+                if (Bukkit.getPluginManager().isPluginEnabled("Nexo")) {
+                    return NexoItems
+                            .optionalItemFromId(type.value())
+                            .map(nb -> new ItemBuilder(nb.build()))
+                            .orElseGet(() -> new ItemBuilder(Material.DIRT));
+                }
+            }
+            case "ia" -> {
+                if (Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
+                    CustomStack stack = CustomStack.getInstance(type.value());
+                    if (stack != null) {
+                        return new ItemBuilder(stack.getItemStack());
                     }
-                    break;
-                case "ia":
-                    if (Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
-                        CustomStack stack = CustomStack.getInstance(val);
+                }
+            }
+            case "hdb" -> {
+                if (Bukkit.getPluginManager().isPluginEnabled("HeadDatabase")) {
+                    HeadDatabaseAPI api = new HeadDatabaseAPI();
+                    ItemStack head = api.getItemHead(type.value);
+                    if (head != null) {
+                        return new ItemBuilder(head);
+                    }
+                }
+            }
+            case "mmoitems" -> {
+                if (Bukkit.getPluginManager().isPluginEnabled("MMOItems")) {
+                    Type mmoType = MMOItems.plugin.getTypes().get(type.value());
+                    if (mmoType != null) {
+                        ItemStack stack = MMOItems.plugin.getItem(mmoType, type.extra());
                         if (stack != null) {
-                            return new ItemBuilder(stack.getItemStack());
+                            return new ItemBuilder(stack);
                         }
                     }
-                    break;
-                case "hdb":
-                    if (Bukkit.getPluginManager().isPluginEnabled("HeadDatabase")) {
-                        HeadDatabaseAPI api = new HeadDatabaseAPI();
-                        ItemStack head = api.getItemHead(val);
-                        if (head != null) {
-                            return new ItemBuilder(head);
-                        }
+                }
+            }
+            case "mythicmobs" -> {
+                if (Bukkit.getPluginManager().isPluginEnabled("MythicMobs")) {
+                    Optional<MythicItem> optional = MythicBukkit.inst().getItemManager().getItem(type.value());
+                    if (optional.isPresent()) {
+                        ItemStack adapt = BukkitAdapter.adapt(optional.get().generateItemStack(1));
+                        return new ItemBuilder(adapt);
                     }
-                    break;
+                }
             }
         }
 
@@ -459,5 +484,27 @@ public class ItemBuilder {
             return false; // fallback
         }
     }
+
+    public static ParsedType parseType(String args) {
+        String[] parts = args.split(":");
+
+        String namespace = parts.length > 0 ? parts[0].toLowerCase() : "";
+        String value = parts.length > 1 ? parts[1] : "";
+        String extra = parts.length > 2 ? parts[2] : "";
+
+        List<String> extraValues = new ArrayList<>();
+        if (parts.length > 3) {
+            extraValues.addAll(Arrays.asList(parts).subList(3, parts.length));
+        }
+
+        return new ParsedType(namespace, value, extra, extraValues);
+    }
+
+    public record ParsedType(
+            String namespace,
+            String value,
+            String extra,          // <-- parts[2], used for MMOItems
+            List<String> extras    // <-- parts[3...n]
+    ) {}
 
 }
