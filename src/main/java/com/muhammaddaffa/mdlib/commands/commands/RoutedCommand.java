@@ -197,6 +197,8 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
     // root-level aliases (for /cmd itself)
     private final List<String> rootAliases = new ArrayList<>();
 
+    public RoutedCommand(String name) { this(name, null); }
+
     public RoutedCommand(String name, String permission) {
         this(name, "", "/" + name, permission);
     }

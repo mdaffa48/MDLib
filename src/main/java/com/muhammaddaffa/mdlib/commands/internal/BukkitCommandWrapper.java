@@ -25,7 +25,7 @@ public class BukkitCommandWrapper extends Command implements PluginIdentifiableC
     @Override public @NotNull Plugin getPlugin() { return owningPlugin; }
 
     @Override
-    public boolean execute(@NotNull CommandSender sender, @NotNull String label, String @NotNull [] args) {
+    public boolean execute(@NotNull CommandSender sender, @NotNull String label, String[] args) {
         if (!testPermission(sender))
             return true;
         spec.execute(sender, label, args);
@@ -33,7 +33,7 @@ public class BukkitCommandWrapper extends Command implements PluginIdentifiableC
     }
 
     @Override
-    public @NotNull List<String> tabComplete(@NotNull CommandSender sender, @NotNull String alias, String @NotNull [] args) throws IllegalArgumentException {
+    public @NotNull List<String> tabComplete(@NotNull CommandSender sender, @NotNull String alias, String[] args) throws IllegalArgumentException {
         return spec.tabComplete(sender, alias, args);
     }
 }

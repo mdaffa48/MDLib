@@ -37,6 +37,11 @@
       <option name="url" value="https://repo1.maven.org/maven2" />
     </remote-repository>
     <remote-repository>
+      <option name="id" value="phoenix" />
+      <option name="name" value="phoenix" />
+      <option name="url" value="https://nexus.phoenixdevt.fr/repository/maven-public/" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="sk89q-repo" />
       <option name="name" value="sk89q-repo" />
       <option name="url" value="https://maven.enginehub.org/repo/" />
@@ -80,6 +85,11 @@
       <option name="id" value="minecraft-libraries" />
       <option name="name" value="Minecraft Libraries" />
       <option name="url" value="https://libraries.minecraft.net/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="nexus" />
+      <option name="name" value="Lumine Releases" />
+      <option name="url" value="https://mvn.lumine.io/repository/maven-public/" />
     </remote-repository>
   </component>
 </project>
