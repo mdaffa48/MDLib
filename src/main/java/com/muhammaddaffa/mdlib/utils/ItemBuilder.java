@@ -486,7 +486,7 @@ public class ItemBuilder {
     }
 
     public static ParsedType parseType(String args) {
-        String[] parts = args.split(":");
+        String[] parts = args.split(";");
 
         String namespace = parts.length > 0 ? parts[0].toLowerCase() : "";
         String value = parts.length > 1 ? parts[1] : "";
