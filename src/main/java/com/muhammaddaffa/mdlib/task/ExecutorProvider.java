@@ -136,4 +136,6 @@ public interface ExecutorProvider {
     default HandleTask entityTimer(Consumer<ScheduledTask> consumer, long delay, long runEvery, Runnable runnable) {
         return syncTimer(delay, runEvery, runnable);
     }
+
+    HandleTask playerTimer(org.bukkit.entity.Player player, long delayTicks, long periodTicks, Runnable runnable);
 }

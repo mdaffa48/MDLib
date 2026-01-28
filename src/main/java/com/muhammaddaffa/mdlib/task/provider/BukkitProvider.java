@@ -5,6 +5,7 @@ import com.muhammaddaffa.mdlib.task.ExecutorProvider;
 import com.muhammaddaffa.mdlib.task.handleTask.HandleTask;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.entity.Player;
 
 import java.util.concurrent.TimeUnit;
 
@@ -53,5 +54,10 @@ public class BukkitProvider implements ExecutorProvider {
     @Override
     public HandleTask regionTimer(World world, int chunkX, int chunkZ, long delay, long runEvery, Runnable runnable) {
         return syncTimer(delay, runEvery, runnable);
+    }
+
+    @Override
+    public HandleTask playerTimer(Player player, long delayTicks, long periodTicks, Runnable runnable) {
+        return syncTimer(delayTicks, periodTicks, runnable);
     }
 }

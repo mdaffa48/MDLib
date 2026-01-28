@@ -6,7 +6,9 @@ import com.muhammaddaffa.mdlib.task.handleTask.HandleTask;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.entity.Player;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -85,5 +87,19 @@ public class FoliaProvider implements ExecutorProvider {
             consumer.accept(task);
             runnable.run();
         }, ticksToMs(delay), ticksToMs(runEvery)));
+    }
+
+    @Override
+    public HandleTask playerTimer(Player player, long delayTicks, long periodTicks, Runnable runnable) {
+        ScheduledTask scheduledTask = player.getScheduler().runAtFixedRate(
+                MDLib.instance(),
+                task -> {},
+                runnable,
+                delayTicks,
+                periodTicks
+        );
+
+        return new HandleTask(Objects.requireNonNullElseGet(scheduledTask, () -> Bukkit.getGlobalRegionScheduler().run(MDLib.instance(), task -> {
+        })));
     }
 }
