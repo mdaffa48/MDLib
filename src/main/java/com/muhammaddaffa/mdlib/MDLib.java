@@ -13,6 +13,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Locale;
+
 public final class MDLib {
 
     private static JavaPlugin instance;
@@ -124,12 +126,13 @@ public final class MDLib {
      * @return true if the server is using Folia, false otherwise
      */
     public static boolean isFolia() {
-        try {
-            Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
+        String serverName = org.bukkit.Bukkit.getServer().getName();
+        if (serverName != null && serverName.equalsIgnoreCase("Folia")) {
             return true;
-        } catch (ClassNotFoundException ignored) {
-            return false;
         }
+
+        String version = org.bukkit.Bukkit.getVersion();
+        return version != null && version.toLowerCase(Locale.ROOT).contains("folia");
     }
 
     public static JavaPlugin instance() {

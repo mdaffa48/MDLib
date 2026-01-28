@@ -30,7 +30,7 @@ public class FoliaProvider implements ExecutorProvider {
 
     @Override
     public HandleTask syncTimer(long delay, long runEvery, Runnable runnable) {
-        return new HandleTask(Bukkit.getGlobalRegionScheduler().runAtFixedRate(MDLib.instance(), task -> runnable.run(), ticksToMs(delay), ticksToMs(runEvery)));
+        return new HandleTask(Bukkit.getGlobalRegionScheduler().runAtFixedRate(MDLib.instance(), task -> runnable.run(), ticksToMs(delay), runEvery));
     }
 
     @Override
