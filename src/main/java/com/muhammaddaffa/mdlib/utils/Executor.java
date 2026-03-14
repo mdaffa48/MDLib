@@ -1,33 +1,37 @@
 package com.muhammaddaffa.mdlib.utils;
 
-import com.muhammaddaffa.mdlib.MDLib;
-import org.bukkit.Bukkit;
-import org.bukkit.scheduler.BukkitTask;
+import com.muhammaddaffa.mdlib.task.ExecutorManager;
+import com.muhammaddaffa.mdlib.task.ExecutorProvider;
+import com.muhammaddaffa.mdlib.task.handleTask.HandleTask;
 
 public class Executor {
 
-    public static BukkitTask sync(Runnable runnable) {
-        return Bukkit.getScheduler().runTask(MDLib.instance(), runnable);
+    public static HandleTask sync(Runnable runnable) {
+        return provider().sync(runnable);
     }
 
-    public static BukkitTask syncLater(long delay, Runnable runnable) {
-        return Bukkit.getScheduler().runTaskLater(MDLib.instance(), runnable, delay);
+    public static HandleTask syncLater(long delay, Runnable runnable) {
+        return provider().syncLater(delay, runnable);
     }
 
-    public static BukkitTask syncTimer(long delay, long runEvery, Runnable runnable) {
-        return Bukkit.getScheduler().runTaskTimer(MDLib.instance(), runnable, delay, runEvery);
+    public static HandleTask syncTimer(long delay, long runEvery, Runnable runnable) {
+        return provider().syncTimer(delay, runEvery, runnable);
     }
 
-    public static BukkitTask async(Runnable runnable) {
-        return Bukkit.getScheduler().runTaskAsynchronously(MDLib.instance(), runnable);
+    public static HandleTask async(Runnable runnable) {
+        return provider().async(runnable);
     }
 
-    public static BukkitTask asyncLater(long delay, Runnable runnable) {
-        return Bukkit.getScheduler().runTaskLaterAsynchronously(MDLib.instance(), runnable, delay);
+    public static HandleTask asyncLater(long delay, Runnable runnable) {
+        return provider().asyncLater(delay, runnable);
     }
 
-    public static BukkitTask asyncTimer(long delay, long runEvery, Runnable runnable) {
-        return Bukkit.getScheduler().runTaskTimerAsynchronously(MDLib.instance(), runnable, delay, runEvery);
+    public static HandleTask asyncTimer(long delay, long runEvery, Runnable runnable) {
+        return provider().asyncTimer(delay, runEvery, runnable);
+    }
+
+    private static ExecutorProvider provider() {
+        return ExecutorManager.getProvider();
     }
     
 }
