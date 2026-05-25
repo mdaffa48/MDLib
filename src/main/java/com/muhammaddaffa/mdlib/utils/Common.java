@@ -2,6 +2,9 @@ package com.muhammaddaffa.mdlib.utils;
 
 import com.cryptomorin.xseries.XSound;
 import me.clip.placeholderapi.PlaceholderAPI;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -26,8 +29,21 @@ import java.util.stream.Collectors;
 
 public class Common {
 
-    private static final Pattern HEX_PATTERN = Pattern.compile("(?:&#|#)([A-Fa-f0-9]{6})");
+    private static final Pattern HEX_PATTERN = Pattern.compile("(?:&#|(?<!<)#)([A-Fa-f0-9]{6})");
+    private static final Pattern LEGACY_COLOR_PATTERN = Pattern.compile("&([0-9A-FK-ORa-fk-or])");
     private static final DecimalFormat decimalFormat = new DecimalFormat("###,###,###,###,###.##");
+
+    // Adventure format
+    private static final LegacyComponentSerializer LEGACY_COMPONENT_SERIALIZER = LegacyComponentSerializer.builder()
+            .hexColors()
+            .hexCharacter('#')
+            .character(ChatColor.COLOR_CHAR)
+            .useUnusualXRepeatedCharacterHexFormat()
+            .extractUrls()
+            .build();
+
+    // MiniMessage
+    private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
 
     public static double getRandomNumberBetween(double min, double max) {
         return ThreadLocalRandom.current().nextDouble(max - min) + min;
@@ -243,23 +259,60 @@ public class Common {
     }
 
     public static String color(final String message) {
-        final char colorChar = ChatColor.COLOR_CHAR;
-
-        final Matcher matcher = HEX_PATTERN.matcher(message);
-        final StringBuilder buffer = new StringBuilder(message.length() + 4 * 8);
-
-        while (matcher.find()) {
-            final String group = matcher.group(1);
-
-            matcher.appendReplacement(buffer, colorChar + "x"
-                    + colorChar + group.charAt(0) + colorChar + group.charAt(1)
-                    + colorChar + group.charAt(2) + colorChar + group.charAt(3)
-                    + colorChar + group.charAt(4) + colorChar + group.charAt(5));
+        if (message == null) {
+            return null;
         }
 
-        // Step 3: Apply legacy formatting codes
-        String legacyFormatted = matcher.appendTail(buffer).toString();
-        return ChatColor.translateAlternateColorCodes('&', legacyFormatted);
+        Component component = MINI_MESSAGE.deserialize(legacyToMiniMessage(message));
+        return LEGACY_COMPONENT_SERIALIZER.serialize(component);
+    }
+
+    private static String legacyToMiniMessage(String message) {
+        // Convert legacy hex colors into MiniMessage hex tags.
+        Matcher hexMatcher = HEX_PATTERN.matcher(message);
+        StringBuilder buffer = new StringBuilder(message.length() + 16);
+
+        while (hexMatcher.find()) {
+            hexMatcher.appendReplacement(buffer, "<#" + hexMatcher.group(1) + ">");
+        }
+
+        // Convert legacy formatting codes into MiniMessage tags
+        Matcher legacyMatcher = LEGACY_COLOR_PATTERN.matcher(hexMatcher.appendTail(buffer).toString());
+        buffer.setLength(0);
+
+        while (legacyMatcher.find()) {
+            legacyMatcher.appendReplacement(buffer, legacyCodeToMiniMessage(legacyMatcher.group(1).charAt(0)));
+        }
+
+        return legacyMatcher.appendTail(buffer).toString();
+    }
+
+    private static String legacyCodeToMiniMessage(char code) {
+        return switch (Character.toLowerCase(code)) {
+            case '0' -> "<black>";
+            case '1' -> "<dark_blue>";
+            case '2' -> "<dark_green>";
+            case '3' -> "<dark_aqua>";
+            case '4' -> "<dark_red>";
+            case '5' -> "<dark_purple>";
+            case '6' -> "<gold>";
+            case '7' -> "<gray>";
+            case '8' -> "<dark_gray>";
+            case '9' -> "<blue>";
+            case 'a' -> "<green>";
+            case 'b' -> "<aqua>";
+            case 'c' -> "<red>";
+            case 'd' -> "<light_purple>";
+            case 'e' -> "<yellow>";
+            case 'f' -> "<white>";
+            case 'k' -> "<obfuscated>";
+            case 'l' -> "<bold>";
+            case 'm' -> "<strikethrough>";
+            case 'n' -> "<underlined>";
+            case 'o' -> "<italic>";
+            case 'r' -> "<reset>";
+            default -> "";
+        };
     }
 
     public static String papi(Player player, String message) {
