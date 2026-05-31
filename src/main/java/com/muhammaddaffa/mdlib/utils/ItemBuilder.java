@@ -1,20 +1,16 @@
 package com.muhammaddaffa.mdlib.utils;
 
-import com.cryptomorin.xseries.profiles.builder.XSkull;
-import com.cryptomorin.xseries.profiles.objects.ProfileInputType;
-import com.cryptomorin.xseries.profiles.objects.Profileable;
+import com.destroystokyo.paper.profile.PlayerProfile;
+import com.destroystokyo.paper.profile.ProfileProperty;
 import com.nexomc.nexo.api.NexoItems;
 import dev.lone.itemsadder.api.CustomStack;
 import io.lumine.mythic.bukkit.BukkitAdapter;
 import io.lumine.mythic.bukkit.MythicBukkit;
 import io.lumine.mythic.core.items.MythicItem;
-import io.lumine.mythic.lib.api.item.NBTItem;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.Indyuce.mmoitems.MMOItems;
-import net.Indyuce.mmoitems.api.MMOItemsAPI;
 import net.Indyuce.mmoitems.api.Type;
-import net.Indyuce.mmoitems.api.item.mmoitem.MMOItem;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -25,6 +21,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Nullable;
 
@@ -216,20 +213,25 @@ public class ItemBuilder {
     }
 
     public ItemBuilder skull(String identifier){
-        ProfileInputType input = ProfileInputType.typeOf(identifier);
-        if (input != null)
-            XSkull.of(this.meta).profile(Profileable.of(input, identifier)).apply();
-        return this;
+        OfflinePlayer player = Bukkit.getOfflinePlayer(identifier);
+        if (player.hasPlayedBefore()) {
+            return skull(player);
+        }
+
+        return this.meta(SkullMeta.class, skullMeta -> {
+            final UUID uuid = UUID.randomUUID();
+            final PlayerProfile profile = Bukkit.createProfile(uuid, uuid.toString().substring(0, 16));
+            // Set the textures property
+            profile.setProperty(new ProfileProperty("textures", identifier));
+
+            skullMeta.setPlayerProfile(profile);
+        });
     }
 
     public ItemBuilder skull(OfflinePlayer identifier){
-        XSkull.of(this.meta).profile(Profileable.of(identifier)).apply();
-        return this;
-    }
-
-    public ItemBuilder skull(UUID identifier){
-        XSkull.of(this.meta).profile(Profileable.of(identifier)).apply();
-        return this;
+        return this.meta(SkullMeta.class, skullMeta -> {
+            skullMeta.setPlayerProfile(identifier.getPlayerProfile());
+        });
     }
 
     public ItemBuilder placeholder(Placeholder placeholder) {
