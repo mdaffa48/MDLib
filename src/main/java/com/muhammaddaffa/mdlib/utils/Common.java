@@ -258,11 +258,13 @@ public class Common {
         return messages.stream().map(Common::color).collect(Collectors.toList());
     }
 
-    public static String color(final String message) {
+    public static String color(String message) {
         if (message == null) {
             return null;
         }
 
+        // This should fix the parser
+        message = message.replace('§', '&');
         Component component = MINI_MESSAGE.deserialize(legacyToMiniMessage(message));
         return LEGACY_COMPONENT_SERIALIZER.serialize(component);
     }
