@@ -31,6 +31,7 @@ public class Common {
 
     private static final Pattern HEX_PATTERN = Pattern.compile("(?:&#|(?<!<)#)([A-Fa-f0-9]{6})");
     private static final Pattern LEGACY_COLOR_PATTERN = Pattern.compile("&([0-9A-FK-ORa-fk-or])");
+    private static final Pattern LEGACY_HEX_PATTERN = Pattern.compile("&x(&[A-Fa-f0-9]){6}");
     private static final DecimalFormat decimalFormat = new DecimalFormat("###,###,###,###,###.##");
 
     // Adventure format
@@ -263,22 +264,37 @@ public class Common {
             return null;
         }
 
-        // This should fix the parser
-        message = message.replace('§', '&');
+        if (message.indexOf('§') >= 0) {
+            message = message.replace('§', '&');
+        }
+
         Component component = MINI_MESSAGE.deserialize(legacyToMiniMessage(message));
         return LEGACY_COMPONENT_SERIALIZER.serialize(component);
     }
 
+
     private static String legacyToMiniMessage(String message) {
-        // Convert legacy hex colors into MiniMessage hex tags.
-        Matcher hexMatcher = HEX_PATTERN.matcher(message);
+        Matcher legacyHexMatcher = LEGACY_HEX_PATTERN.matcher(message);
         StringBuilder buffer = new StringBuilder(message.length() + 16);
+
+        while (legacyHexMatcher.find()) {
+            String legacyHex = legacyHexMatcher.group();
+            String hex = legacyHex
+                    .replace("&x", "")
+                    .replace("&", "");
+
+            legacyHexMatcher.appendReplacement(buffer, "<#" + hex + ">");
+        }
+
+        message = legacyHexMatcher.appendTail(buffer).toString();
+
+        Matcher hexMatcher = HEX_PATTERN.matcher(message);
+        buffer.setLength(0);
 
         while (hexMatcher.find()) {
             hexMatcher.appendReplacement(buffer, "<#" + hexMatcher.group(1) + ">");
         }
 
-        // Convert legacy formatting codes into MiniMessage tags
         Matcher legacyMatcher = LEGACY_COLOR_PATTERN.matcher(hexMatcher.appendTail(buffer).toString());
         buffer.setLength(0);
 
@@ -288,6 +304,7 @@ public class Common {
 
         return legacyMatcher.appendTail(buffer).toString();
     }
+
 
     private static String legacyCodeToMiniMessage(char code) {
         return switch (Character.toLowerCase(code)) {
