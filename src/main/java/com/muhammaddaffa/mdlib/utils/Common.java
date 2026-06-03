@@ -283,7 +283,7 @@ public class Common {
                     .replace("&x", "")
                     .replace("&", "");
 
-            legacyHexMatcher.appendReplacement(buffer, "<#" + hex + ">");
+            legacyHexMatcher.appendReplacement(buffer, Matcher.quoteReplacement("<reset><#" + hex + ">"));
         }
 
         message = legacyHexMatcher.appendTail(buffer).toString();
@@ -292,7 +292,7 @@ public class Common {
         buffer.setLength(0);
 
         while (hexMatcher.find()) {
-            hexMatcher.appendReplacement(buffer, "<#" + hexMatcher.group(1) + ">");
+            hexMatcher.appendReplacement(buffer, Matcher.quoteReplacement("<reset><#" + hexMatcher.group(1) + ">"));
         }
 
         Matcher legacyMatcher = LEGACY_COLOR_PATTERN.matcher(hexMatcher.appendTail(buffer).toString());
@@ -308,22 +308,22 @@ public class Common {
 
     private static String legacyCodeToMiniMessage(char code) {
         return switch (Character.toLowerCase(code)) {
-            case '0' -> "<black>";
-            case '1' -> "<dark_blue>";
-            case '2' -> "<dark_green>";
-            case '3' -> "<dark_aqua>";
-            case '4' -> "<dark_red>";
-            case '5' -> "<dark_purple>";
-            case '6' -> "<gold>";
-            case '7' -> "<gray>";
-            case '8' -> "<dark_gray>";
-            case '9' -> "<blue>";
-            case 'a' -> "<green>";
-            case 'b' -> "<aqua>";
-            case 'c' -> "<red>";
-            case 'd' -> "<light_purple>";
-            case 'e' -> "<yellow>";
-            case 'f' -> "<white>";
+            case '0' -> "<reset><black>";
+            case '1' -> "<reset><dark_blue>";
+            case '2' -> "<reset><dark_green>";
+            case '3' -> "<reset><dark_aqua>";
+            case '4' -> "<reset><dark_red>";
+            case '5' -> "<reset><dark_purple>";
+            case '6' -> "<reset><gold>";
+            case '7' -> "<reset><gray>";
+            case '8' -> "<reset><dark_gray>";
+            case '9' -> "<reset><blue>";
+            case 'a' -> "<reset><green>";
+            case 'b' -> "<reset><aqua>";
+            case 'c' -> "<reset><red>";
+            case 'd' -> "<reset><light_purple>";
+            case 'e' -> "<reset><yellow>";
+            case 'f' -> "<reset><white>";
             case 'k' -> "<obfuscated>";
             case 'l' -> "<bold>";
             case 'm' -> "<strikethrough>";
