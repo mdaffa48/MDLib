@@ -32,6 +32,7 @@ public class Common {
     private static final Pattern HEX_PATTERN = Pattern.compile("(?:&#|(?<!<)#)([A-Fa-f0-9]{6})");
     private static final Pattern LEGACY_COLOR_PATTERN = Pattern.compile("&([0-9A-FK-ORa-fk-or])");
     private static final Pattern LEGACY_HEX_PATTERN = Pattern.compile("&x(&[A-Fa-f0-9]){6}");
+    private static final Pattern MINI_MESSAGE_TAG_PATTERN = Pattern.compile("</?[A-Za-z#][^<>]*>");
     private static final DecimalFormat decimalFormat = new DecimalFormat("###,###,###,###,###.##");
 
     // Adventure format
@@ -274,6 +275,25 @@ public class Common {
 
 
     private static String legacyToMiniMessage(String message) {
+        Matcher tagMatcher = MINI_MESSAGE_TAG_PATTERN.matcher(message);
+        StringBuilder result = new StringBuilder(message.length() + 16);
+        int lastEnd = 0;
+
+        while (tagMatcher.find()) {
+            result.append(convertLegacy(message.substring(lastEnd, tagMatcher.start())));
+            result.append(tagMatcher.group());
+            lastEnd = tagMatcher.end();
+        }
+
+        result.append(convertLegacy(message.substring(lastEnd)));
+        return result.toString();
+    }
+
+    private static String convertLegacy(String message) {
+        if (message.isEmpty()) {
+            return message;
+        }
+
         Matcher legacyHexMatcher = LEGACY_HEX_PATTERN.matcher(message);
         StringBuilder buffer = new StringBuilder(message.length() + 16);
 
