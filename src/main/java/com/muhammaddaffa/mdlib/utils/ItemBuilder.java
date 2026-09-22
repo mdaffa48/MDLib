@@ -11,6 +11,8 @@ import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.Indyuce.mmoitems.MMOItems;
 import net.Indyuce.mmoitems.api.Type;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -27,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Simple {@link ItemStack} builder
@@ -37,6 +40,11 @@ public class ItemBuilder {
 
     private final ItemStack item;
     private final ItemMeta meta;
+
+    // raw, unparsed sources so placeholders and lore edits never round-trip
+    // through a legacy string (which would drop sprites and other object tags)
+    private String rawName;
+    private List<String> rawLore;
 
     public ItemBuilder(Material material) {
         this(new ItemStack(material));
@@ -107,7 +115,8 @@ public class ItemBuilder {
     }
 
     public ItemBuilder name(String name) {
-        this.meta.setDisplayName(Common.color(name));
+        this.rawName = name;
+        this.meta.displayName(display(name));
         return this;
     }
 
@@ -120,12 +129,13 @@ public class ItemBuilder {
     }
 
     public ItemBuilder lore(List<String> lore) {
-        this.meta.setLore(Common.color(lore));
+        this.rawLore = new ArrayList<>(lore);
+        this.meta.lore(this.rawLore.stream().map(ItemBuilder::display).collect(Collectors.toList()));
         return this;
     }
 
     public ItemBuilder addLore(String line) {
-        List<String> lore = this.meta.getLore();
+        List<String> lore = currentLore();
 
         if (lore == null) {
             return lore(line);
@@ -140,7 +150,7 @@ public class ItemBuilder {
     }
 
     public ItemBuilder addLore(List<String> lines) {
-        List<String> lore = this.meta.getLore();
+        List<String> lore = currentLore();
 
         if (lore == null) {
             return lore(lines);
@@ -235,9 +245,13 @@ public class ItemBuilder {
     }
 
     public ItemBuilder placeholder(Placeholder placeholder) {
-        this.name(placeholder.translate(this.meta.getDisplayName()));
-        if (this.meta.getLore() != null) {
-            this.lore(placeholder.translate(this.meta.getLore()));
+        String name = currentName();
+        if (name != null) {
+            this.name(placeholder.translate(name));
+        }
+        List<String> lore = currentLore();
+        if (lore != null) {
+            this.lore(placeholder.translate(lore));
         }
         return this;
     }
@@ -264,8 +278,9 @@ public class ItemBuilder {
         // Check if the placeholder is not null
         if (placeholder != null) replacer = placeholder.translate(replacer);
         // Get the lore
-        if (meta != null && meta.getLore() != null) {
-            for (String line : meta.getLore()) {
+        List<String> current = currentLore();
+        if (current != null) {
+            for (String line : current) {
                 if (line.contains(key)) {
                     lore.addAll(replacer);
                     continue;
@@ -509,4 +524,23 @@ public class ItemBuilder {
             List<String> extras    // <-- parts[3...n]
     ) {}
 
+
+    private static Component display(String text) {
+        return Common.component(text).decoration(TextDecoration.ITALIC, false);
+    }
+
+    private String currentName() {
+        if (this.rawName != null) {
+            return this.rawName;
+        }
+        return this.meta.hasDisplayName() ? this.meta.getDisplayName() : null;
+    }
+
+    private List<String> currentLore() {
+        if (this.rawLore != null) {
+            return new ArrayList<>(this.rawLore);
+        }
+        List<String> lore = this.meta.getLore();
+        return lore == null ? null : new ArrayList<>(lore);
+    }
 }

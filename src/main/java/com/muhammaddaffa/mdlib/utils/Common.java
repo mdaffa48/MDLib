@@ -5,8 +5,7 @@ import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -18,6 +17,7 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.DecimalFormat;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,7 +85,7 @@ public class Common {
         if (placeholder != null) {
             message = placeholder.translate(message);
         }
-        Bukkit.broadcastMessage(color(message));
+        Bukkit.broadcast(component(message));
     }
 
     public static void actionBar(Player player, String message) {
@@ -97,7 +97,7 @@ public class Common {
             message = placeholder.translate(message);
         }
         // send the action bar message
-        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(Common.color(message)));
+        player.sendActionBar(component(message));
     }
 
     public static void sendTitle(Player player, String title, String subTitle) {
@@ -117,7 +117,8 @@ public class Common {
             title = placeholder.translate(title);
             subTitle = placeholder.translate(subTitle);
         }
-        player.sendTitle(Common.color(title), Common.color(subTitle), fadeIn, stay, fadeOut);
+        player.showTitle(Title.title(component(title), component(subTitle),
+                Title.Times.times(ticks(fadeIn), ticks(stay), ticks(fadeOut))));
     }
 
     public static String digits(Object o) {
@@ -245,14 +246,10 @@ public class Common {
             message = placeholder.translate(message);
         }
         // Check if message starts with 'actionbar;'
-        if (sender instanceof Player player) {
-            if (message.startsWith("actionbar;")) {
-                Common.actionBar(player, color(message.replace("actionbar;", "")));
-            } else {
-                sender.sendMessage(color(message));
-            }
+        if (sender instanceof Player player && message.startsWith("actionbar;")) {
+            Common.actionBar(player, message.replace("actionbar;", ""));
         } else {
-            sender.sendMessage(color(message.replace("actionbar;", "")));
+            sender.sendMessage(component(message.replace("actionbar;", "")));
         }
     }
 
@@ -260,17 +257,36 @@ public class Common {
         return messages.stream().map(Common::color).collect(Collectors.toList());
     }
 
+    /**
+     * Legacy string output. Cannot carry object components such as
+     * {@code <sprite:...>} — those flatten to plain text. Use
+     * {@link #component(String)} when the message needs the full format range.
+     */
     public static String color(String message) {
         if (message == null) {
             return null;
+        }
+        return LEGACY_COMPONENT_SERIALIZER.serialize(component(message));
+    }
+
+    public static List<Component> component(List<String> messages) {
+        return messages.stream().map(Common::component).collect(Collectors.toList());
+    }
+
+    public static Component component(String message) {
+        if (message == null) {
+            return Component.empty();
         }
 
         if (message.indexOf('§') >= 0) {
             message = message.replace('§', '&');
         }
 
-        Component component = MINI_MESSAGE.deserialize(legacyToMiniMessage(message));
-        return LEGACY_COMPONENT_SERIALIZER.serialize(component);
+        return MINI_MESSAGE.deserialize(legacyToMiniMessage(message));
+    }
+
+    private static Duration ticks(int ticks) {
+        return Duration.ofMillis(ticks * 50L);
     }
 
 
