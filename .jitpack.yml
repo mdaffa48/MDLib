@@ -1,6 +1,6 @@
 # jitpack.yml
 jdk:
-  - openjdk21
+  - openjdk25
 
 maven:
   version: 3.9.8
