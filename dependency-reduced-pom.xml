@@ -4,7 +4,7 @@
   <groupId>com.muhammaddaffa</groupId>
   <artifactId>MDLib</artifactId>
   <name>MDLib</name>
-  <version>2.3.2</version>
+  <version>2.4.2</version>
   <description>A library for plugin that was created for helping spigot plugin development</description>
   <url>https://muhammaddaffa.com</url>
   <build>
@@ -16,8 +16,12 @@
     </resources>
     <plugins>
       <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.3</version>
+      </plugin>
+      <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.13.0</version>
+        <version>3.15.0</version>
         <configuration>
           <source>${java.version}</source>
           <target>${java.version}</target>
@@ -25,7 +29,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.6.0</version>
+        <version>3.6.2</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -151,9 +155,29 @@
   </repositories>
   <dependencies>
     <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.11.4</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>junit-jupiter-api</artifactId>
+          <groupId>org.junit.jupiter</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>junit-jupiter-params</artifactId>
+          <groupId>org.junit.jupiter</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>junit-jupiter-engine</artifactId>
+          <groupId>org.junit.jupiter</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
       <groupId>io.papermc.paper</groupId>
       <artifactId>paper-api</artifactId>
-      <version>1.21.8-R0.1-SNAPSHOT</version>
+      <version>26.2.build.121-stable</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -165,7 +189,7 @@
     <dependency>
       <groupId>me.clip</groupId>
       <artifactId>placeholderapi</artifactId>
-      <version>2.11.7</version>
+      <version>2.12.3</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -187,9 +211,9 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>dev.lone</groupId>
-      <artifactId>api-itemsadder</artifactId>
-      <version>4.0.10</version>
+      <groupId>beer.devs</groupId>
+      <artifactId>itemsadder-api</artifactId>
+      <version>4.0.18-beta-10</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -225,7 +249,7 @@
     </dependency>
   </dependencies>
   <properties>
-    <java.version>21</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <java.version>25</java.version>
   </properties>
 </project>

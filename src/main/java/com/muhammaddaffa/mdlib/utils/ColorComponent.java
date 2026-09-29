@@ -36,7 +36,7 @@ public class ColorComponent {
     public static Component colorToComponent(String message, @Nullable PlaceholderComponent placeholders) {
         if (message == null) return Component.empty();
 
-        Component component = LEGACY.deserialize(message).decoration(TextDecoration.ITALIC, false);;
+        Component component = Common.component(message).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
 
         if (placeholders != null) {
             component = placeholders.translate(component);

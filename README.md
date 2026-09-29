@@ -12,6 +12,43 @@
 </dependency>
 ```
 
+# MiniMessage messages
+
+`Config.sendMessage(sender, path)` supports single strings and YAML lists. Messages
+are sent as Adventure components, preserving MiniMessage click, hover, font,
+translation, and formatting tags supported by the server's Adventure version.
+
+```yaml
+messages:
+  help: '<click:run_command:/help><hover:show_text:"<yellow>Click for help"><green>Help</green></hover></click>'
+  welcome: '<green>Hello, %player_name%!</green>'
+  notification: 'actionbar;<gold>Saved!</gold>'
+```
+
+`Common.sendMessage` parses MDLib placeholders first, then PlaceholderAPI for player
+senders when that plugin is enabled, then MiniMessage. Console messages skip PAPI.
+Direct action bars and titles also parse PAPI with the receiving player. Broadcasts
+have no individual player context. Placeholder values are treated as trusted
+formatting input; escape untrusted input or use an unparsed MiniMessage resolver.
+
+`Common.component(text)` and `ColorComponent.colorToComponent(text)` preserve
+components. `Common.color(text)` remains a legacy string compatibility API and
+cannot retain click/hover events. Legacy `&`/section-sign colors
+and hex colors remain supported in ordinary text. Quoted tag arguments are passed
+unchanged to MiniMessage; use MiniMessage formatting inside hover text.
+
+Custom tags can be registered once at plugin startup; they then work through
+`Config.sendMessage`, `Common.component`, and `ColorComponent`:
+
+```java
+Common.registerTagResolver("my-plugin", myTagResolver);
+// Remove when disabling the plugin:
+Common.unregisterTagResolver("my-plugin");
+```
+
+For a single parse, use `Common.component(text, resolver)`. Per-parse resolvers take
+precedence over registered resolvers and standard tags.
+
 # Command Example
 ```java
 public final class KitCommand extends RoutedCommand {

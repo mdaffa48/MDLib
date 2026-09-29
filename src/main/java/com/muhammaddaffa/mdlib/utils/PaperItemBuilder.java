@@ -1,8 +1,7 @@
 package com.muhammaddaffa.mdlib.utils;
 
-import com.cryptomorin.xseries.profiles.builder.XSkull;
-import com.cryptomorin.xseries.profiles.objects.ProfileInputType;
-import com.cryptomorin.xseries.profiles.objects.Profileable;
+import com.destroystokyo.paper.profile.PlayerProfile;
+import com.destroystokyo.paper.profile.ProfileProperty;
 import com.nexomc.nexo.api.NexoItems;
 import dev.lone.itemsadder.api.CustomStack;
 import io.papermc.paper.datacomponent.DataComponentTypes;
@@ -20,10 +19,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -173,61 +174,89 @@ public class PaperItemBuilder {
     }
 
     @Deprecated(since = "1.21.5")
-    public PaperItemBuilder customModelData(int data){
+    public PaperItemBuilder customModelData(int data) {
         this.meta.setCustomModelData(data);
         return this;
     }
 
-    public PaperItemBuilder itemModel(NamespacedKey key){
+    public PaperItemBuilder itemModel(NamespacedKey key) {
         this.meta.setItemModel(key);
         return this;
     }
 
-    public PaperItemBuilder pdc(NamespacedKey key, String s){
+    public PaperItemBuilder pdc(NamespacedKey key, String s) {
         this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.STRING, s));
         return this;
     }
 
-    public PaperItemBuilder pdc(NamespacedKey key, Double d){
+    public PaperItemBuilder pdc(NamespacedKey key, Double d) {
         this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.DOUBLE, d));
         return this;
     }
 
-    public PaperItemBuilder pdc(NamespacedKey key, Float f){
+    public PaperItemBuilder pdc(NamespacedKey key, Float f) {
         this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.FLOAT, f));
         return this;
     }
 
-    public PaperItemBuilder pdc(NamespacedKey key, Integer i){
+    public PaperItemBuilder pdc(NamespacedKey key, Integer i) {
         this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.INTEGER, i));
         return this;
     }
 
-    public PaperItemBuilder pdc(NamespacedKey key, Long l){
+    public PaperItemBuilder pdc(NamespacedKey key, Long l) {
         this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.LONG, l));
         return this;
     }
 
-    public PaperItemBuilder pdc(NamespacedKey key, Byte b){
+    public PaperItemBuilder pdc(NamespacedKey key, Byte b) {
         this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.BYTE, b));
         return this;
     }
 
-    public PaperItemBuilder skull(String identifier){
-        ProfileInputType input = ProfileInputType.typeOf(identifier);
-        if (input != null)
-            XSkull.of(this.item).profile(Profileable.of(input, identifier)).apply();
+    /**
+     * Applies a player name, UUID, texture hash, Minecraft texture URL, or Base64 texture.
+     * Unrecognized identifiers and items without skull metadata are left unchanged.
+     */
+    public PaperItemBuilder skull(String identifier) {
+        Objects.requireNonNull(identifier, "identifier");
+        if (!(this.meta instanceof SkullMeta skullMeta)) {
+            return this;
+        }
+
+        String value = identifier.trim();
+        if (value.matches("[A-Za-z0-9_]{1,16}")) {
+            skullMeta.setPlayerProfile(Bukkit.createProfile(value));
+            return this;
+        }
+        if (value.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")) {
+            return skull(UUID.fromString(value));
+        }
+
+        String texture = value;
+        if (value.matches("(?i)(?:(?:https?://)?(?:textures\\.)?minecraft\\.net/texture/)?[0-9a-f]{55,70}")) {
+            String hash = value.substring(value.lastIndexOf('/') + 1).toLowerCase(Locale.ROOT);
+            String json = "{\"textures\":{\"SKIN\":{\"url\":\"https://textures.minecraft.net/texture/" + hash + "\"}}}";
+            texture = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+        } else if (!value.matches("[A-Za-z0-9+/]{100,}={0,2}")) {
+            return this;
+        }
+
+        UUID uuid = UUID.nameUUIDFromBytes(texture.getBytes(StandardCharsets.UTF_8));
+        PlayerProfile profile = Bukkit.createProfile(uuid);
+        profile.setProperty(new ProfileProperty("textures", texture));
+        skullMeta.setPlayerProfile(profile);
         return this;
     }
 
-    public PaperItemBuilder skull(OfflinePlayer identifier){
-        XSkull.of(this.item).profile(Profileable.of(identifier)).apply();
-        return this;
+    public PaperItemBuilder skull(OfflinePlayer identifier) {
+        Objects.requireNonNull(identifier, "identifier");
+        return meta(SkullMeta.class, skullMeta -> skullMeta.setPlayerProfile(identifier.getPlayerProfile()));
     }
 
-    public PaperItemBuilder skull(UUID identifier){
-        XSkull.of(this.item).profile(Profileable.of(identifier)).apply();
-        return this;
+    public PaperItemBuilder skull(UUID identifier) {
+        Objects.requireNonNull(identifier, "identifier");
+        return meta(SkullMeta.class, skullMeta -> skullMeta.setPlayerProfile(Bukkit.createProfile(identifier)));
     }
 
     public PaperItemBuilder placeholder(PlaceholderComponent placeholder) {
@@ -395,9 +424,9 @@ public class PaperItemBuilder {
     }
 
     public static ItemBuilder retrieveItemBuilder(String materialString) {
-        String[] parts  = materialString.split(";", 2);
-        String id       = parts[0].trim();
-        String val      = parts.length > 1 ? parts[1].trim() : "";
+        String[] parts = materialString.split(";", 2);
+        String id = parts[0].trim();
+        String val = parts.length > 1 ? parts[1].trim() : "";
 
         if (parts.length == 2) {
             switch (id.toLowerCase()) {

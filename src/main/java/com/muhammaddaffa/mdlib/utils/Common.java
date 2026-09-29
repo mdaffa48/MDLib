@@ -4,6 +4,7 @@ import com.cryptomorin.xseries.XSound;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
@@ -20,7 +21,9 @@ import java.text.DecimalFormat;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
@@ -32,7 +35,6 @@ public class Common {
     private static final Pattern HEX_PATTERN = Pattern.compile("(?:&#|(?<!<)#)([A-Fa-f0-9]{6})");
     private static final Pattern LEGACY_COLOR_PATTERN = Pattern.compile("&([0-9A-FK-ORa-fk-or])");
     private static final Pattern LEGACY_HEX_PATTERN = Pattern.compile("&x(&[A-Fa-f0-9]){6}");
-    private static final Pattern MINI_MESSAGE_TAG_PATTERN = Pattern.compile("</?[A-Za-z#][^<>]*>");
     private static final DecimalFormat decimalFormat = new DecimalFormat("###,###,###,###,###.##");
 
     // Adventure format
@@ -46,6 +48,18 @@ public class Common {
 
     // MiniMessage
     private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
+    private static final Map<String, TagResolver> TAG_RESOLVERS = new LinkedHashMap<>();
+    private static volatile TagResolver customTags = TagResolver.empty();
+
+    public static synchronized void registerTagResolver(String id, TagResolver resolver) {
+        TAG_RESOLVERS.put(Objects.requireNonNull(id), Objects.requireNonNull(resolver));
+        customTags = TagResolver.resolver(TAG_RESOLVERS.values());
+    }
+
+    public static synchronized void unregisterTagResolver(String id) {
+        TAG_RESOLVERS.remove(id);
+        customTags = TagResolver.resolver(TAG_RESOLVERS.values());
+    }
 
     public static double getRandomNumberBetween(double min, double max) {
         return ThreadLocalRandom.current().nextDouble(max - min) + min;
@@ -97,7 +111,7 @@ public class Common {
             message = placeholder.translate(message);
         }
         // send the action bar message
-        player.sendActionBar(component(message));
+        player.sendActionBar(component(papi(player, message)));
     }
 
     public static void sendTitle(Player player, String title, String subTitle) {
@@ -117,7 +131,7 @@ public class Common {
             title = placeholder.translate(title);
             subTitle = placeholder.translate(subTitle);
         }
-        player.showTitle(Title.title(component(title), component(subTitle),
+        player.showTitle(Title.title(component(papi(player, title)), component(papi(player, subTitle)),
                 Title.Times.times(ticks(fadeIn), ticks(stay), ticks(fadeOut))));
     }
 
@@ -239,17 +253,18 @@ public class Common {
         if (message == null || message.isEmpty()) {
             return;
         }
-        if (sender instanceof Player player) {
-            message = papi(player, message);
-        }
         if (placeholder != null) {
             message = placeholder.translate(message);
         }
+        if (sender instanceof Player player) {
+            message = papi(player, message);
+        }
         // Check if message starts with 'actionbar;'
         if (sender instanceof Player player && message.startsWith("actionbar;")) {
-            Common.actionBar(player, message.replace("actionbar;", ""));
+            player.sendActionBar(component(message.substring("actionbar;".length())));
         } else {
-            sender.sendMessage(component(message.replace("actionbar;", "")));
+            sender.sendMessage(component(message.startsWith("actionbar;")
+                    ? message.substring("actionbar;".length()) : message));
         }
     }
 
@@ -258,8 +273,7 @@ public class Common {
     }
 
     /**
-     * Legacy string output. Cannot carry object components such as
-     * {@code <sprite:...>} — those flatten to plain text. Use
+     * Legacy string output. Cannot retain click or hover events. Use
      * {@link #component(String)} when the message needs the full format range.
      */
     public static String color(String message) {
@@ -274,15 +288,14 @@ public class Common {
     }
 
     public static Component component(String message) {
+        return component(message, TagResolver.empty());
+    }
+
+    public static Component component(String message, TagResolver resolver) {
         if (message == null) {
             return Component.empty();
         }
-
-        if (message.indexOf('§') >= 0) {
-            message = message.replace('§', '&');
-        }
-
-        return MINI_MESSAGE.deserialize(legacyToMiniMessage(message));
+        return MINI_MESSAGE.deserialize(legacyToMiniMessage(message), customTags, resolver);
     }
 
     private static Duration ticks(int ticks) {
@@ -291,21 +304,53 @@ public class Common {
 
 
     private static String legacyToMiniMessage(String message) {
-        Matcher tagMatcher = MINI_MESSAGE_TAG_PATTERN.matcher(message);
         StringBuilder result = new StringBuilder(message.length() + 16);
         int lastEnd = 0;
-
-        while (tagMatcher.find()) {
-            result.append(convertLegacy(message.substring(lastEnd, tagMatcher.start())));
-            result.append(tagMatcher.group());
-            lastEnd = tagMatcher.end();
+        for (int index = 0; index < message.length(); index++) {
+            if (message.charAt(index) == '\\') {
+                index++;
+                continue;
+            }
+            if (message.charAt(index) != '<') {
+                continue;
+            }
+            int end = tagEnd(message, index + 1);
+            if (end < 0) {
+                continue;
+            }
+            result.append(convertLegacy(message.substring(lastEnd, index)));
+            result.append(message, index, end + 1);
+            lastEnd = end + 1;
+            index = end;
         }
 
         result.append(convertLegacy(message.substring(lastEnd)));
         return result.toString();
     }
 
+    private static int tagEnd(String message, int start) {
+        char quote = 0;
+        for (int index = start; index < message.length(); index++) {
+            char current = message.charAt(index);
+            if (quote != 0) {
+                if (current == '\\') {
+                    index++;
+                } else if (current == quote) {
+                    quote = 0;
+                }
+            } else if (current == '\'' || current == '"') {
+                quote = current;
+            } else if (current == '>') {
+                return index;
+            } else if (current == '<') {
+                return -1;
+            }
+        }
+        return -1;
+    }
+
     private static String convertLegacy(String message) {
+        message = message.replace('§', '&');
         if (message.isEmpty()) {
             return message;
         }
@@ -371,6 +416,9 @@ public class Common {
     }
 
     public static String papi(Player player, String message) {
+        if (message == null || !Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            return message;
+        }
         try {
             return PlaceholderAPI.setPlaceholders(player, message);
         } catch (Exception ex) {
