@@ -101,6 +101,9 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
                 Object parsed = p.type.parse(sender, tr);
                 ctx.put(p.name, parsed);
             }
+            if (tr.hasNext()) {
+                throw new ArgParseException("Too many arguments.");
+            }
             handler.run(sender, ctx);
             return true;
         }
@@ -201,7 +204,7 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
     public RoutedCommand(String name) { this(name, null); }
 
     public RoutedCommand(String name, String permission) {
-        this(name, "", "/" + name, permission);
+        this(name, "", null, permission);
     }
 
     protected RoutedCommand(String name, String description, String explicitUsage, String permission) {
@@ -247,6 +250,7 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
 
     @Override
     public void execute(CommandSender sender, String label, String[] raw) {
+        CommandPlan activePlan = rootPlan;
         try {
             if (raw.length == 0) {
                 if (rootPlan.isDefined()) {
@@ -266,6 +270,7 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
             }
 
             if (matched != null) {
+                activePlan = matched;
                 String[] rest = Arrays.copyOfRange(raw, 1, raw.length);
                 matched.handle(sender, rest, null);
                 return; // sub handles its own perm
@@ -279,8 +284,9 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
             return;
 
         } catch (ArgParseException apx) {
-            sender.sendMessage(Common.papi(sender, "§c" + apx.getMessage()));
-            sender.sendMessage(Common.papi(sender, "§7Usage: §f" + usage()));
+            String commandUsage = activePlan.isRoot() && explicitUsage != null && !explicitUsage.isBlank()
+                    ? explicitUsage : activePlan.usageString(label);
+            sender.sendMessage(Common.papi(sender, "§cUsage: " + commandUsage));
             return;
         } catch (Throwable t) {
             sender.sendMessage(Common.papi(sender, "§cAn internal error occurred. See console."));
@@ -290,22 +296,12 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
     }
 
     protected boolean onRoot(CommandSender sender) {
-        // show only subs the sender can access; include aliases in the list
-        List<String> visible = new ArrayList<>();
         for (CommandPlan p : subs) {
             String perm = p.permission();
-            if (perm == null || perm.isBlank() || sender.hasPermission(perm)) {
-                // format: "give (g, grant)" if aliases exist
-                List<String> labels = p.labelsForTab();
-                String primary = labels.isEmpty() ? "" : labels.get(0);
-                List<String> rest = labels.size() > 1 ? labels.subList(1, labels.size()) : List.of();
-                if (rest.isEmpty()) visible.add(primary);
-                else visible.add(primary + " §8(" + String.join(", ", rest) + ")§7");
+            if (p.isDefined() && (perm == null || perm.isBlank() || sender.hasPermission(perm))) {
+                sender.sendMessage(Common.papi(sender, "§f" + p.usageString(name)));
             }
         }
-        String list = visible.isEmpty() ? "-" : String.join("§7, §f", visible);
-        sender.sendMessage(Common.papi(sender, "§7Available: §f" + list));
-        sender.sendMessage(Common.papi(sender, "§7Usage: §f" + usage()));
         return true;
     }
 
