@@ -15,8 +15,10 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -29,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 /**
@@ -299,7 +302,17 @@ public class ItemBuilder {
 
     @Nullable
     public static ItemBuilder fromConfig(Config config, String path, @Nullable Placeholder placeholder) {
-        return fromConfig(config.getConfig(), path, placeholder);
+        return fromConfig(null, config, path, placeholder);
+    }
+
+    @Nullable
+    public static ItemBuilder fromConfig(@Nullable Player player, Config config, String path) {
+        return fromConfig(player, config, path, null);
+    }
+
+    @Nullable
+    public static ItemBuilder fromConfig(@Nullable Player player, Config config, String path, @Nullable Placeholder placeholder) {
+        return fromConfig(player, config.getConfig(), path, placeholder);
     }
 
     @Nullable
@@ -309,11 +322,21 @@ public class ItemBuilder {
 
     @Nullable
     public static ItemBuilder fromConfig(FileConfiguration config, String path, @Nullable Placeholder placeholder) {
+        return fromConfig(null, config, path, placeholder);
+    }
+
+    @Nullable
+    public static ItemBuilder fromConfig(@Nullable Player player, FileConfiguration config, String path) {
+        return fromConfig(player, config, path, null);
+    }
+
+    @Nullable
+    public static ItemBuilder fromConfig(@Nullable Player player, FileConfiguration config, String path, @Nullable Placeholder placeholder) {
         ConfigurationSection section = config.getConfigurationSection(path);
         if (section == null) {
             return null;
         }
-        return fromConfig(section, placeholder);
+        return fromConfig(player, section, placeholder);
     }
 
     @Nullable
@@ -323,30 +346,32 @@ public class ItemBuilder {
 
     @Nullable
     public static ItemBuilder fromConfig(ConfigurationSection section, @Nullable Placeholder placeholder) {
+        return fromConfig(null, section, placeholder);
+    }
+
+    @Nullable
+    public static ItemBuilder fromConfig(@Nullable Player player, ConfigurationSection section) {
+        return fromConfig(player, section, null);
+    }
+
+    @Nullable
+    public static ItemBuilder fromConfig(@Nullable Player player, ConfigurationSection section, @Nullable Placeholder placeholder) {
         if (section == null) {
             return null;
         }
-        // get all the available variables
+        boolean placeholderAPI = isPlaceholderAPI();
+        section = resolveConfig(section, value -> {
+            String translated = placeholder == null ? value : placeholder.translate(value);
+            return placeholderAPI ? PlaceholderAPI.setPlaceholders(player, translated) : translated;
+        });
         String materialString = section.getString("material", "BARRIER");
-        if (placeholder != null) materialString = placeholder.translate(materialString);
-        Integer cmd = section.get("custom-model-data") == null ? null : section.getInt("custom-model-data");
+        Integer cmd = section.get("custom-model-data") == null ? null : configInt(section, "custom-model-data", 0);
         String itemModel = section.getString("item-model") == null ? "" : section.getString("item-model");
-        int amount = section.getInt("amount");
+        int amount = configInt(section, "amount", 0);
         String displayName = section.getString("display-name");
         List<String> lore = section.getStringList("lore");
         List<String> flags = section.getStringList("flags");
         List<String> enchantments = section.getStringList("enchantments");
-
-        // Parse the placeholder on the material
-        if (placeholder != null) {
-            materialString = placeholder.translate(materialString);
-        }
-
-        if (isPlaceholderAPI()) {
-            materialString = PlaceholderAPI.setPlaceholders(null, materialString);
-            if (displayName != null) displayName = PlaceholderAPI.setPlaceholders(null, displayName);
-            lore = PlaceholderAPI.setPlaceholders(null, lore);
-        }
 
         // start building the item
         ItemBuilder builder = retrieveItemBuilder(materialString);
@@ -366,7 +391,7 @@ public class ItemBuilder {
         // set the item flag
         for (String flag : flags) {
             if (isValidItemFlag(flag)) {
-                builder.flags(ItemFlag.valueOf(flag));
+                builder.flags(ItemFlag.valueOf(flag.toUpperCase(Locale.ROOT)));
             }
         }
         // enchantments
@@ -377,16 +402,11 @@ public class ItemBuilder {
             // enchant the item
             builder.enchant(enchant, level);
         }
-        // set the placeholder
-        if (placeholder != null) {
-            builder.placeholder(placeholder);
-        }
-
         // Try to get the color
         if (section.get("color") != null) {
-            int r = section.getInt("color.r", 255);
-            int g = section.getInt("color.g", 255);
-            int b = section.getInt("color.b", 255);
+            int r = configInt(section, "color.r", 255);
+            int g = configInt(section, "color.g", 255);
+            int b = configInt(section, "color.b", 255);
             // Create a color object
             Color color = Color.fromRGB(r, g, b);
             // If the item is a tipped arrow, apply it
@@ -405,6 +425,45 @@ public class ItemBuilder {
         }
 
         return builder;
+    }
+
+    static ConfigurationSection resolveConfig(ConfigurationSection section, UnaryOperator<String> resolver) {
+        ConfigurationSection resolved = new MemoryConfiguration();
+        Set<String> keys = new LinkedHashSet<>(section.getKeys(true));
+        ConfigurationSection defaults = section.getDefaultSection();
+        if (defaults != null) {
+            keys.addAll(defaults.getKeys(true));
+        }
+        for (String key : keys) {
+            Object value = section.get(key);
+            if (value instanceof ConfigurationSection) {
+                resolved.createSection(key);
+            } else if (value instanceof String text) {
+                resolved.set(key, resolver.apply(text));
+            } else if (value instanceof List<?> list) {
+                resolved.set(key, list.stream()
+                        .map(entry -> entry instanceof String text ? resolver.apply(text) : entry)
+                        .collect(Collectors.toList()));
+            } else {
+                resolved.set(key, value);
+            }
+        }
+        return resolved;
+    }
+
+    static int configInt(ConfigurationSection section, String path, int defaultValue) {
+        Object value = section.get(path);
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value instanceof String text) {
+            try {
+                return Integer.parseInt(text.trim());
+            } catch (NumberFormatException ignored) {
+                return defaultValue;
+            }
+        }
+        return defaultValue;
     }
 
     public static ItemBuilder retrieveItemBuilder(String materialString) {
@@ -478,7 +537,7 @@ public class ItemBuilder {
 
     private static boolean isValidItemFlag(String flag) {
         try {
-            ItemFlag.valueOf(flag.toUpperCase());
+            ItemFlag.valueOf(flag.toUpperCase(Locale.ROOT));
             return true;
         } catch (IllegalArgumentException ex) {
             return false;
