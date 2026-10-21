@@ -25,6 +25,8 @@ hs_err_pid*
 replay_pid*
 
 ### Maven template
+/settings.xml
+/.mvn/maven.config
 target/
 pom.xml.tag
 pom.xml.releaseBackup
