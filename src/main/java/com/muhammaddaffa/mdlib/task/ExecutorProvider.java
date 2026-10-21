@@ -5,7 +5,6 @@ import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public interface ExecutorProvider {
@@ -108,6 +107,7 @@ public interface ExecutorProvider {
      * @param runnable
      * @return
      */
+    @Deprecated
     default HandleTask entity(Consumer<ScheduledTask> consumer, Runnable runnable) {
         return sync(runnable);
     }
@@ -120,6 +120,7 @@ public interface ExecutorProvider {
      * @param runnable
      * @return
      */
+    @Deprecated
     default HandleTask entityLater(Consumer<ScheduledTask> consumer, long delay, Runnable runnable) {
         return syncLater(delay, runnable);
     }
@@ -133,9 +134,22 @@ public interface ExecutorProvider {
      * @param runnable
      * @return
      */
+    @Deprecated
     default HandleTask entityTimer(Consumer<ScheduledTask> consumer, long delay, long runEvery, Runnable runnable) {
         return syncTimer(delay, runEvery, runnable);
     }
 
     HandleTask playerTimer(org.bukkit.entity.Player player, long delayTicks, long periodTicks, Runnable runnable);
+
+    default HandleTask entity(Entity entity, Runnable runnable) {
+        return sync(runnable);
+    }
+
+    default HandleTask entityLater(Entity entity, long delay, Runnable runnable) {
+        return syncLater(delay, runnable);
+    }
+
+    default HandleTask entityTimer(Entity entity, long delay, long runEvery, Runnable runnable) {
+        return syncTimer(delay, runEvery, runnable);
+    }
 }

@@ -39,7 +39,7 @@ public class WgEntity {
                         return true;
                     }
                     regions.add(region);
-                    Executor.syncLater(1L, () -> Bukkit.getPluginManager().callEvent(new RegionEnteredEvent(region, entity, way)));
+                    Executor.entityLater(entity, 1L, () -> Bukkit.getPluginManager().callEvent(new RegionEnteredEvent(region, entity, way)));
                 }
 
             }
@@ -53,7 +53,7 @@ public class WgEntity {
                     if(leave.isCancelled()) {
                         return true;
                     }
-                    Executor.syncLater(1L, () -> Bukkit.getPluginManager().callEvent(new RegionLeftEvent(oldRegion, entity, way)));
+                    Executor.entityLater(entity, 1L, () -> Bukkit.getPluginManager().callEvent(new RegionLeftEvent(oldRegion, entity, way)));
                     toRemove.add(oldRegion);
                 }
             }
@@ -66,7 +66,7 @@ public class WgEntity {
                 if(leave.isCancelled()) {
                     return true;
                 }
-                Executor.syncLater(1L, () -> Bukkit.getPluginManager().callEvent(new RegionLeftEvent(region, entity, way)));
+                Executor.entityLater(entity, 1L, () -> Bukkit.getPluginManager().callEvent(new RegionLeftEvent(region, entity, way)));
             }
             regions.clear();
         }

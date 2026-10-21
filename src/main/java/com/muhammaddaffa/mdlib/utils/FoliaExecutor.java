@@ -1,6 +1,7 @@
 package com.muhammaddaffa.mdlib.utils;
 
 import com.muhammaddaffa.mdlib.MDLib;
+import com.muhammaddaffa.mdlib.task.handleTask.HandleTask;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 
@@ -23,7 +24,7 @@ public class FoliaExecutor {
      *      * }</pre>
      */
     public static ScheduledTask runTask(Consumer<ScheduledTask> runnable) {
-        return Bukkit.getGlobalRegionScheduler().run(MDLib.instance(), runnable);
+        return HandleTask.track(Bukkit.getGlobalRegionScheduler().run(MDLib.instance(), runnable));
     }
 
     /**
@@ -41,7 +42,7 @@ public class FoliaExecutor {
      * }</pre>
      */
     public static ScheduledTask runTaskLater(Consumer<ScheduledTask> runnable, long delay) {
-        return Bukkit.getGlobalRegionScheduler().runDelayed(MDLib.instance(), runnable, delay);
+        return HandleTask.track(Bukkit.getGlobalRegionScheduler().runDelayed(MDLib.instance(), runnable, Math.max(1, delay)));
     }
 
     /**
@@ -60,7 +61,7 @@ public class FoliaExecutor {
      *      * }</pre>
      */
     public static ScheduledTask runTaskTimer(Consumer<ScheduledTask> runnable, long delay, long period) {
-        return Bukkit.getGlobalRegionScheduler().runAtFixedRate(MDLib.instance(), runnable, delay, period);
+        return HandleTask.track(Bukkit.getGlobalRegionScheduler().runAtFixedRate(MDLib.instance(), runnable, Math.max(1, delay), period));
     }
 
     /**
@@ -77,7 +78,7 @@ public class FoliaExecutor {
      *      * }</pre>
      */
     public static ScheduledTask runTaskAsynchronously(Consumer<ScheduledTask> runnable) {
-        return Bukkit.getAsyncScheduler().runNow(MDLib.instance(), runnable);
+        return HandleTask.track(Bukkit.getAsyncScheduler().runNow(MDLib.instance(), runnable));
     }
 
     /**
@@ -96,7 +97,7 @@ public class FoliaExecutor {
      *      * }</pre>
      */
     public static ScheduledTask runTaskLaterAsynchronously(Consumer<ScheduledTask> runnable, long delay, TimeUnit timeUnit) {
-        return Bukkit.getAsyncScheduler().runDelayed(MDLib.instance(), runnable, delay, timeUnit);
+        return HandleTask.track(Bukkit.getAsyncScheduler().runDelayed(MDLib.instance(), runnable, delay, timeUnit));
     }
 
     /**
@@ -116,6 +117,6 @@ public class FoliaExecutor {
      *      * }</pre>
      */
     public static ScheduledTask runTaskTimerAsynchronously(Consumer<ScheduledTask> runnable, long delay, long period, TimeUnit timeUnit) {
-        return Bukkit.getAsyncScheduler().runAtFixedRate(MDLib.instance(), runnable, delay, period, timeUnit);
+        return HandleTask.track(Bukkit.getAsyncScheduler().runAtFixedRate(MDLib.instance(), runnable, delay, period, timeUnit));
     }
 }

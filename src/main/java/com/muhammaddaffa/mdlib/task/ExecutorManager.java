@@ -3,6 +3,7 @@ package com.muhammaddaffa.mdlib.task;
 import com.muhammaddaffa.mdlib.MDLib;
 import com.muhammaddaffa.mdlib.task.provider.BukkitProvider;
 import com.muhammaddaffa.mdlib.task.provider.FoliaProvider;
+import com.muhammaddaffa.mdlib.task.handleTask.HandleTask;
 
 public class ExecutorManager {
 
@@ -17,6 +18,11 @@ public class ExecutorManager {
             init();
         }
         return provider;
+    }
+
+    public static void shutdown() {
+        HandleTask.cancelAll();
+        provider = null;
     }
 
     public static boolean isFolia() {
