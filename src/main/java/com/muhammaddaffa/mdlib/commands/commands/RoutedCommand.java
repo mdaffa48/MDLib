@@ -1,6 +1,7 @@
 package com.muhammaddaffa.mdlib.commands.commands;
 
 import com.muhammaddaffa.mdlib.commands.args.*;
+import com.muhammaddaffa.mdlib.utils.Common;
 import org.bukkit.command.CommandSender;
 import org.bukkit.util.StringUtil;
 
@@ -81,7 +82,7 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
                     ? permission
                     : (isRoot() ? fallbackPerm : null);
             if (permToCheck != null && !permToCheck.isBlank() && !sender.hasPermission(permToCheck)) {
-                sender.sendMessage("§cYou don't have permission to use this command.");
+                sender.sendMessage(Common.papi(sender, "§cYou don't have permission to use this command."));
                 return true;
             }
 
@@ -278,11 +279,11 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
             return;
 
         } catch (ArgParseException apx) {
-            sender.sendMessage("§c" + apx.getMessage());
-            sender.sendMessage("§7Usage: §f" + usage());
+            sender.sendMessage(Common.papi(sender, "§c" + apx.getMessage()));
+            sender.sendMessage(Common.papi(sender, "§7Usage: §f" + usage()));
             return;
         } catch (Throwable t) {
-            sender.sendMessage("§cAn internal error occurred. See console.");
+            sender.sendMessage(Common.papi(sender, "§cAn internal error occurred. See console."));
             t.printStackTrace();
             return;
         }
@@ -303,13 +304,13 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
             }
         }
         String list = visible.isEmpty() ? "-" : String.join("§7, §f", visible);
-        sender.sendMessage("§7Available: §f" + list);
-        sender.sendMessage("§7Usage: §f" + usage());
+        sender.sendMessage(Common.papi(sender, "§7Available: §f" + list));
+        sender.sendMessage(Common.papi(sender, "§7Usage: §f" + usage()));
         return true;
     }
 
     protected boolean onUnknownSub(CommandSender sender, String token) {
-        sender.sendMessage("§cUnknown subcommand: §f" + token);
+        sender.sendMessage(Common.papi(sender, "§cUnknown subcommand: §f" + token));
         return onRoot(sender);
     }
 

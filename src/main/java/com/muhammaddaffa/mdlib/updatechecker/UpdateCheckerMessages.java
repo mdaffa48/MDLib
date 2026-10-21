@@ -18,6 +18,7 @@
 
 package com.muhammaddaffa.mdlib.updatechecker;
 
+import com.muhammaddaffa.mdlib.utils.Common;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -37,16 +38,17 @@ import java.util.stream.Stream;
 class UpdateCheckerMessages {
 
     @NotNull
-    private static TextComponent createLink(@NotNull final String text, @NotNull final String link) {
+    private static TextComponent createLink(@NotNull final Player player, @NotNull final String text, @NotNull final String link) {
+        final String resolvedLink = Common.papi(player, link);
         final ComponentBuilder lore = new ComponentBuilder("Link: ")
                 .bold(true)
-                .append(link)
+                .append(resolvedLink)
                 .bold(false);
-        final TextComponent component = new TextComponent(text);
+        final TextComponent component = new TextComponent(Common.papi(player, text));
         component.setBold(true);
         // TODO: Make color configurable
         component.setColor(net.md_5.bungee.api.ChatColor.GOLD);
-        component.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, link));
+        component.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, resolvedLink));
         //noinspection deprecation
         component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, lore.create()));
         return component;
@@ -111,15 +113,15 @@ class UpdateCheckerMessages {
     protected static void printCheckResultToPlayer(Player player, boolean showMessageWhenLatestVersion) {
         UpdateChecker instance = UpdateChecker.getInstance();
         if (instance.getLastCheckResult() == UpdateCheckResult.NEW_VERSION_AVAILABLE) {
-            player.sendMessage(ChatColor.GRAY + "There is a new version of " + ChatColor.GOLD + instance.getPlugin().getName() + ChatColor.GRAY + " available.");
+            player.sendMessage(Common.papi(player, ChatColor.GRAY + "There is a new version of " + ChatColor.GOLD + instance.getPlugin().getName() + ChatColor.GRAY + " available."));
             sendLinks(player);
-            player.sendMessage(ChatColor.DARK_GRAY + "Latest version: " + ChatColor.GREEN + instance.getLatestVersion() + ChatColor.DARK_GRAY + " | Your version: " + ChatColor.RED + instance.getUsedVersion());
-            player.sendMessage("");
+            player.sendMessage(Common.papi(player, ChatColor.DARK_GRAY + "Latest version: " + ChatColor.GREEN + instance.getLatestVersion() + ChatColor.DARK_GRAY + " | Your version: " + ChatColor.RED + instance.getUsedVersion()));
+            player.sendMessage(Common.papi(player, ""));
         } else if (instance.getLastCheckResult() == UpdateCheckResult.UNKNOWN) {
-            player.sendMessage(ChatColor.GOLD + instance.getPlugin().getName() + ChatColor.RED + " could not check for updates.");
+            player.sendMessage(Common.papi(player, ChatColor.GOLD + instance.getPlugin().getName() + ChatColor.RED + " could not check for updates."));
         } else {
             if (showMessageWhenLatestVersion) {
-                player.sendMessage(ChatColor.GREEN + "You are running the latest version of " + ChatColor.GOLD + instance.getPlugin().getName());
+                player.sendMessage(Common.papi(player, ChatColor.GREEN + "You are running the latest version of " + ChatColor.GOLD + instance.getPlugin().getName()));
             }
         }
     }
@@ -142,7 +144,7 @@ class UpdateCheckerMessages {
         logger.log(Level.WARNING, dash.toString());
     }
 
-    private static void sendLinks(@NotNull final Player... players) {
+    private static void sendLinks(@NotNull final Player player) {
 
         UpdateChecker instance = UpdateChecker.getInstance();
 
@@ -151,19 +153,19 @@ class UpdateCheckerMessages {
         List<String> downloadLinks = instance.getAppropriateDownloadLinks();
 
         if (downloadLinks.size() == 2) {
-            links.add(createLink(String.format("Download (%s)", instance.getNamePaidVersion()), downloadLinks.get(0)));
-            links.add(createLink(String.format("Download (%s)", instance.getNameFreeVersion()), downloadLinks.get(1)));
+            links.add(createLink(player, String.format("Download (%s)", instance.getNamePaidVersion()), downloadLinks.get(0)));
+            links.add(createLink(player, String.format("Download (%s)", instance.getNameFreeVersion()), downloadLinks.get(1)));
         } else if (downloadLinks.size() == 1) {
-            links.add(createLink("Download", downloadLinks.get(0)));
+            links.add(createLink(player, "Download", downloadLinks.get(0)));
         }
         if (instance.getDonationLink() != null) {
-            links.add(createLink("Donate", instance.getDonationLink()));
+            links.add(createLink(player, "Donate", instance.getDonationLink()));
         }
         if (instance.getChangelogLink() != null) {
-            links.add(createLink("Changelog", instance.getChangelogLink()));
+            links.add(createLink(player, "Changelog", instance.getChangelogLink()));
         }
         if (instance.getSupportLink() != null) {
-            links.add(createLink("Support", instance.getSupportLink()));
+            links.add(createLink(player, "Support", instance.getSupportLink()));
         }
 
         final TextComponent placeholder = new TextComponent(" | ");
@@ -180,8 +182,6 @@ class UpdateCheckerMessages {
             }
         }
 
-        for (Player player : players) {
-            player.spigot().sendMessage(text);
-        }
+        player.spigot().sendMessage(text);
     }
 }

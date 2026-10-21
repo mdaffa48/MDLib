@@ -11,20 +11,25 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.server.BroadcastMessageEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.permissions.Permissible;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -99,7 +104,27 @@ public class Common {
         if (placeholder != null) {
             message = placeholder.translate(message);
         }
-        Bukkit.broadcast(component(message));
+        Component original = component(message);
+        Set<CommandSender> recipients = new HashSet<>();
+        for (Permissible permissible : Bukkit.getPluginManager().getPermissionSubscriptions(Server.BROADCAST_CHANNEL_USERS)) {
+            if (permissible instanceof CommandSender sender && sender.hasPermission(Server.BROADCAST_CHANNEL_USERS)) {
+                recipients.add(sender);
+            }
+        }
+        BroadcastMessageEvent event = new BroadcastMessageEvent(!Bukkit.isPrimaryThread(), original, recipients);
+        Bukkit.getPluginManager().callEvent(event);
+        if (event.isCancelled()) {
+            return;
+        }
+        for (CommandSender recipient : event.getRecipients()) {
+            Component rendered = event.message();
+            if (recipient instanceof Player player) {
+                rendered = rendered.equals(original) ? component(papi(player, message))
+                        : rendered.replaceText(builder -> builder.match("%[^%]+%")
+                                .replacement((match, text) -> component(papi(player, match.group()))));
+            }
+            recipient.sendMessage(rendered);
+        }
     }
 
     public static void actionBar(Player player, String message) {
@@ -256,9 +281,7 @@ public class Common {
         if (placeholder != null) {
             message = placeholder.translate(message);
         }
-        if (sender instanceof Player player) {
-            message = papi(player, message);
-        }
+        message = papi(sender, message);
         // Check if message starts with 'actionbar;'
         if (sender instanceof Player player && message.startsWith("actionbar;")) {
             player.sendActionBar(component(message.substring("actionbar;".length())));
@@ -413,6 +436,10 @@ public class Common {
             case 'r' -> "<reset>";
             default -> "";
         };
+    }
+
+    public static String papi(CommandSender sender, String message) {
+        return sender instanceof Player player ? papi(player, message) : message;
     }
 
     public static String papi(Player player, String message) {
