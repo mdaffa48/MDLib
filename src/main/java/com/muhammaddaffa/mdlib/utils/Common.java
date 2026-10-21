@@ -66,6 +66,11 @@ public class Common {
         customTags = TagResolver.resolver(TAG_RESOLVERS.values());
     }
 
+    public static synchronized void clearTagResolvers() {
+        TAG_RESOLVERS.clear();
+        customTags = TagResolver.empty();
+    }
+
     public static double getRandomNumberBetween(double min, double max) {
         return ThreadLocalRandom.current().nextDouble(max - min) + min;
     }

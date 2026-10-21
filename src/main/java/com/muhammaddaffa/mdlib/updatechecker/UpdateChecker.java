@@ -22,6 +22,7 @@ import com.muhammaddaffa.mdlib.task.ExecutorManager;
 import com.muhammaddaffa.mdlib.task.handleTask.HandleTask;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +55,7 @@ public class UpdateChecker {
     private static final String GITHUB_RELEASE_API = "https://api.github.com/repos/%s/%s/releases";
     private static final String HANGAR_RELEASE_API =  "https://hangar.papermc.io/api/v1/projects/%s/%s/latest?channel=%s";
     private static UpdateChecker instance = null;
-    private static boolean listenerAlreadyRegistered = false;
+    private static UpdateCheckListener listener;
 
     static {
         checkRelocation();
@@ -88,6 +89,7 @@ public class UpdateChecker {
     private int timeout = 0;
     private String usedVersion;
     private String userAgentString = null;
+    private volatile boolean closed;
     private boolean usingPaidVersion = false;
 
     {
@@ -118,9 +120,9 @@ public class UpdateChecker {
             usingPaidVersion = true;
         }
 
-        if (!listenerAlreadyRegistered) {
-            Bukkit.getPluginManager().registerEvents(new UpdateCheckListener(), plugin);
-            listenerAlreadyRegistered = true;
+        if (listener == null) {
+            listener = new UpdateCheckListener();
+            Bukkit.getPluginManager().registerEvents(listener, plugin);
         }
     }
 
@@ -302,6 +304,19 @@ public class UpdateChecker {
         return this;
     }
 
+    public static void shutdown(Plugin owner) {
+        if (instance == null || instance.plugin != owner) {
+            return;
+        }
+        instance.closed = true;
+        instance.stop();
+        if (listener != null) {
+            HandlerList.unregisterAll(listener);
+            listener = null;
+        }
+        instance = null;
+    }
+
     /**
      * Checks for updates now and sends the result to the given list of
      * CommandSenders. Can be null to silently check for updates.
@@ -309,6 +324,9 @@ public class UpdateChecker {
      * @param requesters CommandSenders to send the result to, or null
      */
     public UpdateChecker checkNow(@Nullable CommandSender... requesters) {
+        if (closed) {
+            throw new IllegalStateException("Update checker is shut down.");
+        }
         if (plugin == null) {
             throw new IllegalStateException("Plugin has not been set.");
         }
@@ -323,6 +341,9 @@ public class UpdateChecker {
         }
 
         ExecutorManager.getProvider().async(() -> {
+            if (closed) {
+                return;
+            }
 
             UpdateCheckEvent updateCheckEvent;
 
@@ -344,15 +365,28 @@ public class UpdateChecker {
                     latestVersion = usedVersion;
                 }
 
+                if (closed) {
+                    return;
+                }
                 updateCheckEvent = new UpdateCheckEvent(UpdateCheckSuccess.SUCCESS);
             } catch (final IOException exception) {
+                if (closed) {
+                    return;
+                }
                 updateCheckEvent = new UpdateCheckEvent(UpdateCheckSuccess.FAIL);
-                ExecutorManager.getProvider().sync(() -> getOnFail().accept(requesters, exception));
+                ExecutorManager.getProvider().sync(() -> {
+                    if (!closed) {
+                        getOnFail().accept(requesters, exception);
+                    }
+                });
             }
 
             UpdateCheckEvent finalUpdateCheckEvent = updateCheckEvent.setRequesters(requesters);
 
             ExecutorManager.getProvider().sync(() -> {
+                if (closed) {
+                    return;
+                }
 
                 if (finalUpdateCheckEvent.getSuccess() == UpdateCheckSuccess.SUCCESS) {
                     getOnSuccess().accept(requesters, latestVersion);

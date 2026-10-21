@@ -3,17 +3,30 @@ package com.muhammaddaffa.mdlib;
 import com.jeff_media.customblockdata.CustomBlockData;
 import com.muhammaddaffa.mdlib.commands.CommandRegistry;
 import com.muhammaddaffa.mdlib.hooks.VaultEconomy;
+import com.muhammaddaffa.mdlib.task.ExecutorManager;
+import com.muhammaddaffa.mdlib.updatechecker.UpdateChecker;
+import com.muhammaddaffa.mdlib.utils.Common;
+import com.muhammaddaffa.mdlib.utils.Config;
 import com.muhammaddaffa.mdlib.utils.Logger;
+import com.muhammaddaffa.mdlib.worldguards.WgEntity;
 import com.muhammaddaffa.mdlib.worldguards.listeners.entity.EntityRegionListener;
 import com.muhammaddaffa.mdlib.worldguards.listeners.RegionListener;
 import com.muhammaddaffa.mdlib.worldguards.listeners.entity.EntityRemoveListenerV1_20_4;
 
 import fr.mrmicky.fastinv.FastInvManager;
 import org.bukkit.Bukkit;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.RegisteredListener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Locale;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class MDLib {
 
@@ -26,6 +39,7 @@ public final class MDLib {
     private static boolean PLACEHOLDER_API, VAULT, WORLD_GUARD;
 
     private static CommandRegistry commands;
+    private static final List<Listener> listeners = new ArrayList<>();
 
     /**
      * This method should be executed in JavaPlugin#onLoad
@@ -38,16 +52,32 @@ public final class MDLib {
      * This method should be executed in JavaPlugin#onEnable
      */
     public static void onEnable(JavaPlugin plugin) {
-        // initialize the instance
+        Objects.requireNonNull(plugin, "plugin");
+        if (instance == plugin) {
+            return;
+        }
+        if (instance != null) {
+            throw new IllegalStateException("MDLib is already initialized for another plugin.");
+        }
+        Set<Listener> existing = HandlerList.getRegisteredListeners(plugin).stream()
+                .map(RegisteredListener::getListener).collect(Collectors.toSet());
         instance = plugin;
-        // initialize the commands registry
-        commands = new CommandRegistry(plugin);
-        // check if server is using placeholderapi
-        PLACEHOLDER_API = Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null;
-        VAULT = Bukkit.getPluginManager().getPlugin("Vault") != null;
-        WORLD_GUARD = Bukkit.getPluginManager().getPlugin("WorldGuard") != null;
-        // Register the listeners
-        registerListeners();
+        boolean enabled = false;
+        try {
+            commands = new CommandRegistry(plugin);
+            PLACEHOLDER_API = Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI");
+            VAULT = Bukkit.getPluginManager().isPluginEnabled("Vault");
+            WORLD_GUARD = Bukkit.getPluginManager().isPluginEnabled("WorldGuard");
+            registerListeners();
+            enabled = true;
+        } finally {
+            listeners.addAll(HandlerList.getRegisteredListeners(plugin).stream()
+                    .map(RegisteredListener::getListener).filter(listener -> !existing.contains(listener))
+                    .distinct().toList());
+            if (!enabled) {
+                shutdown();
+            }
+        }
     }
 
     /**
@@ -55,7 +85,31 @@ public final class MDLib {
      * @return
      */
     public static void shutdown() {
-
+        if (instance != null) {
+            UpdateChecker.shutdown(instance);
+        }
+        ExecutorManager.shutdown();
+        if (commands != null) {
+            commands.unregisterAll();
+        }
+        listeners.forEach(HandlerList::unregisterAll);
+        listeners.clear();
+        Config.shutdown();
+        Common.clearTagResolvers();
+        if (WORLD_GUARD) {
+            WgEntity.getPlayerCache().clear();
+        }
+        if (VAULT) {
+            VaultEconomy.shutdown();
+        }
+        commands = null;
+        instance = null;
+        PLACEHOLDER_API = false;
+        VAULT = false;
+        WORLD_GUARD = false;
+        LISTEN_VAULT = true;
+        LISTEN_WORLDGUARD = false;
+        CUSTOM_BLOCK_DATA = false;
     }
 
     private static void registerListeners() {
@@ -105,18 +159,18 @@ public final class MDLib {
     public static boolean isPaper() {
         try {
             // Any other works, just the shortest I could find.
-            Class.forName("com.destroystokyo.paper.ParticleBuilder");
+            Class.forName("com.destroystokyo.paper.ParticleBuilder", false, MDLib.class.getClassLoader());
             return true;
-        } catch (ClassNotFoundException ignored) {
+        } catch (ClassNotFoundException | LinkageError ignored) {
             return false;
         }
     }
 
     public static boolean is1_20_4OrNewer() {
         try {
-            Class.forName("org.bukkit.event.entity.EntityRemoveEvent;");
+            Class.forName("org.bukkit.event.entity.EntityRemoveEvent", false, MDLib.class.getClassLoader());
             return true;
-        } catch (ClassNotFoundException ignored) {
+        } catch (ClassNotFoundException | LinkageError ignored) {
             return false;
         }
     }
@@ -126,6 +180,11 @@ public final class MDLib {
      * @return true if the server is using Folia, false otherwise
      */
     public static boolean isFolia() {
+        try {
+            Class.forName("io.papermc.paper.threadedregions.RegionizedServer", false, MDLib.class.getClassLoader());
+            return true;
+        } catch (ClassNotFoundException | LinkageError ignored) {
+        }
         String serverName = org.bukkit.Bukkit.getServer().getName();
         if (serverName != null && serverName.equalsIgnoreCase("Folia")) {
             return true;

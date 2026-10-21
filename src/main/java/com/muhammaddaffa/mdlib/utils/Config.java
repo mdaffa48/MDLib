@@ -26,6 +26,10 @@ public class Config {
         configMap.put(config.getFile().getPath(), config);
     }
 
+    public static void shutdown() {
+        configMap.clear();
+    }
+
     public static void reload() {
         for (Config config : configMap.values()) {
             if (!config.isShouldReload()) continue;

@@ -16,6 +16,7 @@ public final class CommandRegistry {
 
     private final Plugin plugin;
     private final CommandMap commandMap;
+    private final Set<Command> registeredCommands = new HashSet<>();
 
     public CommandRegistry(Plugin plugin) {
         this.plugin = plugin;
@@ -26,6 +27,7 @@ public final class CommandRegistry {
         BukkitCommandWrapper wrapper = new BukkitCommandWrapper(plugin, spec);
         unregisterIfPresent(spec.name(), spec.aliases());
         commandMap.register(plugin.getName().toLowerCase(Locale.ROOT), wrapper);
+        registeredCommands.add(wrapper);
     }
 
     public void registerAll(Collection<? extends SimpleCommandSpec> specs) {
@@ -40,16 +42,16 @@ public final class CommandRegistry {
         unregister(name, new ArrayList<>());
     }
 
+    public void unregisterAll() {
+        commandMap.getKnownCommands().entrySet().removeIf(entry -> registeredCommands.contains(entry.getValue()));
+        registeredCommands.forEach(command -> command.unregister(commandMap));
+        registeredCommands.clear();
+    }
+
     // ---- internals ----
 
     private CommandMap getCommandMap() {
-        try {
-            Field f = Bukkit.getServer().getClass().getDeclaredField("commandMap");
-            f.setAccessible(true);
-            return (CommandMap) f.get(Bukkit.getServer());
-        } catch (Throwable t) {
-            throw new IllegalStateException("Unable to access CommandMap via reflection", t);
-        }
+        return Bukkit.getCommandMap();
     }
 
     @SuppressWarnings("unchecked")
