@@ -68,10 +68,6 @@
                             <shadedPattern>com.muhammaddaffa.mdlib.fastboard</shadedPattern>
                         </relocation>
                         <relocation>
-                            <pattern>fr.mrmicky.fastinv</pattern>
-                            <shadedPattern>com.muhammaddaffa.mdlib.fastinv</shadedPattern>
-                        </relocation>
-                        <relocation>
                             <pattern>com.jeff_media.customblockdata</pattern>
                             <shadedPattern>com.muhammaddaffa.mdlib.customblockdata</shadedPattern>
                         </relocation>
@@ -263,12 +259,6 @@
             <groupId>fr.mrmicky</groupId>
             <artifactId>fastboard</artifactId>
             <version>2.1.5</version>
-        </dependency>
-        <!-- FastInv -->
-        <dependency>
-            <groupId>fr.mrmicky</groupId>
-            <artifactId>FastInv</artifactId>
-            <version>3.1.1</version>
         </dependency>
         <!-- XSeries -->
         <dependency>

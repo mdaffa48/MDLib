@@ -13,7 +13,7 @@ import com.muhammaddaffa.mdlib.worldguards.listeners.entity.EntityRegionListener
 import com.muhammaddaffa.mdlib.worldguards.listeners.RegionListener;
 import com.muhammaddaffa.mdlib.worldguards.listeners.entity.EntityRemoveListenerV1_20_4;
 
-import fr.mrmicky.fastinv.FastInvManager;
+import com.muhammaddaffa.mdlib.fastinv.FastInvManager;
 import org.bukkit.Bukkit;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;

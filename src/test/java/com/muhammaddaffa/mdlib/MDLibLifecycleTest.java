@@ -7,7 +7,7 @@ import com.muhammaddaffa.mdlib.updatechecker.UpdateChecker;
 import com.muhammaddaffa.mdlib.utils.Common;
 import com.muhammaddaffa.mdlib.utils.Config;
 import com.muhammaddaffa.mdlib.worldguards.WgEntity;
-import fr.mrmicky.fastinv.FastInvManager;
+import com.muhammaddaffa.mdlib.fastinv.FastInvManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
