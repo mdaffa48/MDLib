@@ -22,6 +22,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.PotionMeta;
@@ -77,8 +78,7 @@ public class ItemBuilder {
 
     @Deprecated
     public ItemBuilder durability(short durability) {
-        this.item.setDurability(durability);
-        return this;
+        return meta(Damageable.class, damageable -> damageable.setDamage(durability));
     }
 
     public ItemBuilder amount(int amount) {

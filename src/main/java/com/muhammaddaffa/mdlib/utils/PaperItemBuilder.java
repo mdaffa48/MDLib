@@ -3,8 +3,8 @@ package com.muhammaddaffa.mdlib.utils;
 import com.destroystokyo.paper.profile.PlayerProfile;
 import com.destroystokyo.paper.profile.ProfileProperty;
 import io.papermc.paper.datacomponent.DataComponentTypes;
-import io.papermc.paper.datacomponent.item.ItemLore;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -52,13 +52,16 @@ public class PaperItemBuilder {
     }
 
     public PaperItemBuilder type(@NotNull Material material) {
+        this.item.setItemMeta(this.meta);
         this.item = this.item.withType(material);
         this.meta = this.item.getItemMeta();
         return this;
     }
 
     public PaperItemBuilder durability(int durability) {
+        this.item.setItemMeta(this.meta);
         this.item.setData(DataComponentTypes.DAMAGE, durability);
+        this.meta = this.item.getItemMeta();
         return this;
     }
 
@@ -72,17 +75,19 @@ public class PaperItemBuilder {
     }
 
     public PaperItemBuilder enchant(Enchantment enchantment, int level) {
+        this.item.setItemMeta(this.meta);
         this.item.addEnchantment(enchantment, level);
+        this.meta = this.item.getItemMeta();
         return this;
     }
 
     public PaperItemBuilder removeEnchant(Enchantment enchantment) {
-        this.item.removeEnchantment(enchantment);
+        this.meta.removeEnchant(enchantment);
         return this;
     }
 
     public PaperItemBuilder removeEnchants() {
-        this.item.getEnchantments().keySet().forEach(this.meta::removeEnchant);
+        this.meta.getEnchants().keySet().forEach(this.meta::removeEnchant);
         return this;
     }
 
@@ -117,19 +122,12 @@ public class PaperItemBuilder {
     }
 
     public PaperItemBuilder lore(List<Component> lore) {
-        this.item.setData(DataComponentTypes.LORE, ItemLore.lore(lore));
+        this.meta.lore(lore);
         return this;
     }
 
     public PaperItemBuilder addLore(Component line) {
-        List<Component> lore = this.item.lore();
-
-        if (lore == null) {
-            return lore(line);
-        }
-
-        lore.add(line);
-        return lore(lore);
+        return addLore(Collections.singletonList(line));
     }
 
     public PaperItemBuilder addLore(Component... lines) {
@@ -137,18 +135,19 @@ public class PaperItemBuilder {
     }
 
     public PaperItemBuilder addLore(List<Component> lines) {
-        List<Component> lore = this.item.lore();
+        List<Component> lore = this.meta.lore();
 
         if (lore == null) {
             return lore(lines);
         }
 
+        lore = new ArrayList<>(lore);
         lore.addAll(lines);
         return lore(lore);
     }
 
     public PaperItemBuilder flags(ItemFlag... flags) {
-        this.item.addItemFlags(flags);
+        this.meta.addItemFlags(flags);
         return this;
     }
 
@@ -157,7 +156,7 @@ public class PaperItemBuilder {
     }
 
     public PaperItemBuilder removeFlags(ItemFlag... flags) {
-        this.item.removeItemFlags(flags);
+        this.meta.removeItemFlags(flags);
         return this;
     }
 
@@ -181,32 +180,32 @@ public class PaperItemBuilder {
     }
 
     public PaperItemBuilder pdc(NamespacedKey key, String s) {
-        this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.STRING, s));
+        this.meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, s);
         return this;
     }
 
     public PaperItemBuilder pdc(NamespacedKey key, Double d) {
-        this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.DOUBLE, d));
+        this.meta.getPersistentDataContainer().set(key, PersistentDataType.DOUBLE, d);
         return this;
     }
 
     public PaperItemBuilder pdc(NamespacedKey key, Float f) {
-        this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.FLOAT, f));
+        this.meta.getPersistentDataContainer().set(key, PersistentDataType.FLOAT, f);
         return this;
     }
 
     public PaperItemBuilder pdc(NamespacedKey key, Integer i) {
-        this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.INTEGER, i));
+        this.meta.getPersistentDataContainer().set(key, PersistentDataType.INTEGER, i);
         return this;
     }
 
     public PaperItemBuilder pdc(NamespacedKey key, Long l) {
-        this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.LONG, l));
+        this.meta.getPersistentDataContainer().set(key, PersistentDataType.LONG, l);
         return this;
     }
 
     public PaperItemBuilder pdc(NamespacedKey key, Byte b) {
-        this.item.editPersistentDataContainer(setter -> setter.set(key, PersistentDataType.BYTE, b));
+        this.meta.getPersistentDataContainer().set(key, PersistentDataType.BYTE, b);
         return this;
     }
 
@@ -256,11 +255,11 @@ public class PaperItemBuilder {
     }
 
     public PaperItemBuilder placeholder(PlaceholderComponent placeholder) {
-        Component currentName = this.item.displayName();
+        Component currentName = this.meta.displayName();
         if (currentName != null) {
             this.name(placeholder.translate(currentName));
         }
-        List<Component> currentLore = this.item.lore();
+        List<Component> currentLore = this.meta.lore();
         if (currentLore != null) {
             this.lore(placeholder.translate(currentLore));
         }
@@ -286,12 +285,13 @@ public class PaperItemBuilder {
 
     public PaperItemBuilder loreCustom(String key, List<Component> replacer, @Nullable PlaceholderComponent placeholder) {
         List<Component> lore = new ArrayList<>();
-        // Check if the placeholder is not null
-        if (placeholder != null) replacer = placeholder.translate(replacer);
-        // Get the lore
-        if (item.lore() != null) {
-            for (Component line : item.lore()) {
-                if (line.contains(Component.text(key))) {
+        if (placeholder != null) {
+            replacer = placeholder.translate(replacer);
+        }
+        List<Component> currentLore = this.meta.lore();
+        if (currentLore != null) {
+            for (Component line : currentLore) {
+                if (PlainTextComponentSerializer.plainText().serialize(line).contains(key)) {
                     lore.addAll(replacer);
                     continue;
                 }
