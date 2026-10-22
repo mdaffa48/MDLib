@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -30,6 +32,7 @@ class FastInvTest {
     private MockedStatic<Bukkit> bukkit;
     private Inventory inventory;
     private FastInvManager.InventoryListener listener;
+    private final Player viewer = mock(Player.class);
 
     @BeforeEach
     void setUp() {
@@ -142,6 +145,7 @@ class FastInvTest {
     @Test
     void navigationButtonsReplacePageContentsAndHandlersAndClearUnusedSlots() {
         PaginatedFastInv menu = new PaginatedFastInv(18, "Pages");
+        menu.setClickCooldownMillis(0);
         menu.setContentSlots(List.of(0, 1));
         ItemStack first = mock(ItemStack.class);
         ItemStack second = mock(ItemStack.class);
@@ -188,6 +192,7 @@ class FastInvTest {
     @Test
     void schemeBindsDecorationHandlersAndPaginationContentSlotsAcrossRows() {
         PaginatedFastInv menu = new PaginatedFastInv(18, "Scheme");
+        menu.setClickCooldownMillis(0);
         ItemStack border = mock(ItemStack.class);
         ItemStack first = mock(ItemStack.class);
         ItemStack second = mock(ItemStack.class);
@@ -221,11 +226,110 @@ class FastInvTest {
         assertEquals(List.of("border", "second", "third"), calls);
     }
 
+    @Test
+    void cooldownOnlyStartsForItemHandlersAndRejectedClicksDoNotExtendIt() {
+        AtomicLong now = new AtomicLong();
+        List<String> calls = new ArrayList<>();
+        FastInv menu = new FastInv(holder -> {
+            when(inventory.getHolder()).thenReturn(holder);
+            return inventory;
+        }, now::get) {
+            @Override
+            protected void onClick(InventoryClickEvent event) {
+                calls.add("hook");
+            }
+        };
+        menu.addClickHandler(event -> calls.add("global"));
+        menu.setItem(0, mock(ItemStack.class), event -> calls.add("first"));
+        menu.setItem(1, mock(ItemStack.class), event -> calls.add("second"));
+        assertEquals(250, menu.getClickCooldownMillis());
+
+        listener.onInventoryClick(click(5));
+        listener.onInventoryClick(click(0));
+        now.set(TimeUnit.MILLISECONDS.toNanos(200));
+        InventoryClickEvent blocked = click(1);
+        listener.onInventoryClick(blocked);
+        assertEquals(List.of("hook", "global", "hook", "global", "first"), calls);
+        verify(blocked, atLeastOnce()).setCancelled(true);
+
+        now.set(TimeUnit.MILLISECONDS.toNanos(249));
+        listener.onInventoryClick(click(5));
+        listener.onInventoryClick(click(1));
+        now.set(TimeUnit.MILLISECONDS.toNanos(250));
+        listener.onInventoryClick(click(1));
+        assertEquals(List.of("hook", "global", "hook", "global", "first",
+                "hook", "global", "hook", "global", "second"), calls);
+    }
+
+    @Test
+    void viewersHaveIndependentCooldownsAndCustomDurationIsRespected() {
+        AtomicLong now = new AtomicLong();
+        FastInv menu = new FastInv(holder -> {
+            when(inventory.getHolder()).thenReturn(holder);
+            return inventory;
+        }, now::get);
+        menu.setClickCooldownMillis(500);
+        List<String> calls = new ArrayList<>();
+        menu.setItem(0, mock(ItemStack.class), event -> calls.add("action"));
+        listener.onInventoryClick(click(0));
+        InventoryClickEvent otherViewer = click(0);
+        when(otherViewer.getWhoClicked()).thenReturn(mock(Player.class));
+        listener.onInventoryClick(otherViewer);
+        now.set(TimeUnit.MILLISECONDS.toNanos(499));
+        listener.onInventoryClick(click(0));
+        assertEquals(2, calls.size());
+        now.set(TimeUnit.MILLISECONDS.toNanos(500));
+        listener.onInventoryClick(click(0));
+        assertEquals(3, calls.size());
+    }
+
+    @Test
+    void subclassesCanConfigureOrDisableTheCooldownAndNegativeDurationsAreRejected() {
+        class CustomMenu extends FastInv {
+            CustomMenu() {
+                super(9, "Custom");
+                setClickCooldownMillis(500);
+            }
+        }
+        FastInv menu = new CustomMenu();
+        assertEquals(500, menu.getClickCooldownMillis());
+        assertThrows(IllegalArgumentException.class, () -> menu.setClickCooldownMillis(-1));
+        assertEquals(500, menu.getClickCooldownMillis());
+        List<String> calls = new ArrayList<>();
+        menu.setItem(0, mock(ItemStack.class), event -> calls.add("action"));
+        listener.onInventoryClick(click(0));
+        menu.setClickCooldownMillis(0);
+        listener.onInventoryClick(click(0));
+        listener.onInventoryClick(click(0));
+        assertEquals(3, calls.size());
+    }
+
+    @Test
+    void paginationButtonsUseTheSameCooldown() {
+        PaginatedFastInv menu = new PaginatedFastInv(18, "Pages");
+        menu.setClickCooldownMillis(60_000);
+        menu.setContentSlots(List.of(0));
+        menu.addContent(mock(ItemStack.class));
+        menu.addContent(mock(ItemStack.class));
+        menu.previousPageItem(9, mock(ItemStack.class));
+        menu.nextPageItem(17, mock(ItemStack.class));
+        menu.openPage(1);
+
+        listener.onInventoryClick(click(17));
+        assertEquals(2, menu.currentPage());
+        listener.onInventoryClick(click(9));
+        assertEquals(2, menu.currentPage());
+        menu.setClickCooldownMillis(0);
+        listener.onInventoryClick(click(9));
+        assertEquals(1, menu.currentPage());
+    }
+
     private InventoryClickEvent click(int slot) {
         InventoryClickEvent event = mock(InventoryClickEvent.class);
         when(event.getInventory()).thenReturn(inventory);
         when(event.getClickedInventory()).thenReturn(inventory);
         when(event.getRawSlot()).thenReturn(slot);
+        when(event.getWhoClicked()).thenReturn(viewer);
         return event;
     }
 }

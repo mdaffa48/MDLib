@@ -25,6 +25,7 @@ package com.muhammaddaffa.mdlib.fastinv;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -34,6 +35,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.LongSupplier;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 /**
@@ -52,6 +55,9 @@ public class FastInv implements InventoryHolder {
     private final List<Consumer<InventoryDragEvent>> dragHandlers = new ArrayList<>();
 
     private final Inventory inventory;
+    private final LongSupplier nanoTime;
+    private final Map<HumanEntity, Long> lastClicks = new WeakHashMap<>();
+    private volatile long clickCooldownMillis = 250;
 
     private Predicate<Player> closeFilter;
 
@@ -98,7 +104,12 @@ public class FastInv implements InventoryHolder {
     }
 
     public FastInv(Function<FastInv, Inventory> inventoryFunction) {
+        this(inventoryFunction, System::nanoTime);
+    }
+
+    FastInv(Function<FastInv, Inventory> inventoryFunction, LongSupplier nanoTime) {
         Objects.requireNonNull(inventoryFunction, "inventoryFunction");
+        this.nanoTime = Objects.requireNonNull(nanoTime, "nanoTime");
         Inventory inv = inventoryFunction.apply(this);
 
         if (inv.getHolder() != this) {
@@ -106,6 +117,35 @@ public class FastInv implements InventoryHolder {
         }
 
         this.inventory = inv;
+    }
+
+    public long getClickCooldownMillis() {
+        return this.clickCooldownMillis;
+    }
+
+    public void setClickCooldownMillis(long clickCooldownMillis) {
+        if (clickCooldownMillis < 0) {
+            throw new IllegalArgumentException("Click cooldown must not be negative.");
+        }
+        synchronized (this.lastClicks) {
+            this.clickCooldownMillis = clickCooldownMillis;
+            this.lastClicks.clear();
+        }
+    }
+
+    private boolean acceptClick(HumanEntity viewer) {
+        synchronized (this.lastClicks) {
+            if (this.clickCooldownMillis == 0) {
+                return true;
+            }
+            long now = this.nanoTime.getAsLong();
+            Long previous = this.lastClicks.get(viewer);
+            if (previous != null && now - previous < TimeUnit.MILLISECONDS.toNanos(this.clickCooldownMillis)) {
+                return false;
+            }
+            this.lastClicks.put(viewer, now);
+            return true;
+        }
     }
 
     /**
@@ -392,6 +432,10 @@ public class FastInv implements InventoryHolder {
     }
 
     void handleClick(InventoryClickEvent e) {
+        if (this.itemHandlers.containsKey(e.getRawSlot()) && !acceptClick(e.getWhoClicked())) {
+            e.setCancelled(true);
+            return;
+        }
         onClick(e);
 
         this.clickHandlers.forEach(c -> c.accept(e));
