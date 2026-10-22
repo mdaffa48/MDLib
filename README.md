@@ -12,7 +12,7 @@
     <dependency>
         <groupId>com.muhammaddaffa</groupId>
         <artifactId>MDLib</artifactId>
-        <version>2.4.3</version>
+        <version>2.4.4</version>
     </dependency>
 </dependencies>
 ```
@@ -27,6 +27,6 @@ repositories {
 }
 
 dependencies {
-    implementation("com.muhammaddaffa:MDLib:2.4.3")
+    implementation("com.muhammaddaffa:MDLib:2.4.4")
 }
 ```
