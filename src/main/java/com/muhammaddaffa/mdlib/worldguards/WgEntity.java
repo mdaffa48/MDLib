@@ -10,7 +10,6 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.event.player.PlayerEvent;
 
 import java.util.*;
 
@@ -30,47 +29,43 @@ public class WgEntity {
 
         final ApplicableRegionSet toRegions = SimpleWorldGuardAPI.getRegions(to);
         final ApplicableRegionSet fromRegions = SimpleWorldGuardAPI.getRegions(from);
-        if(!toRegions.getRegions().isEmpty()) {
-            for(ProtectedRegion region : toRegions) {
-                if(!regions.contains(region)) {
-                    final RegionEnterEvent enter = new RegionEnterEvent(region, entity, way);
-                    Bukkit.getPluginManager().callEvent(enter);
-                    if(enter.isCancelled()) {
-                        return true;
-                    }
-                    regions.add(region);
-                    Executor.entityLater(entity, 1L, () -> Bukkit.getPluginManager().callEvent(new RegionEnteredEvent(region, entity, way)));
-                }
-
+        final List<ProtectedRegion> entered = new ArrayList<>();
+        final List<ProtectedRegion> left = new ArrayList<>();
+        for (ProtectedRegion region : toRegions) {
+            if (!regions.contains(region)) {
+                entered.add(region);
             }
-
-            final Set<ProtectedRegion> toRemove = new HashSet<>();
-
-            for(ProtectedRegion oldRegion : fromRegions) {
-                if(!toRegions.getRegions().contains(oldRegion)) {
-                    final RegionLeaveEvent leave = new RegionLeaveEvent(oldRegion, entity, way);
-                    Bukkit.getPluginManager().callEvent(leave);
-                    if(leave.isCancelled()) {
-                        return true;
-                    }
-                    Executor.entityLater(entity, 1L, () -> Bukkit.getPluginManager().callEvent(new RegionLeftEvent(oldRegion, entity, way)));
-                    toRemove.add(oldRegion);
-                }
+        }
+        final Iterable<ProtectedRegion> previous = toRegions.getRegions().isEmpty() ? regions : fromRegions;
+        for (ProtectedRegion region : previous) {
+            if (!toRegions.getRegions().contains(region)) {
+                left.add(region);
             }
-            regions.removeAll(toRemove);
-
-        } else {
-            for(ProtectedRegion region : regions) {
-                final RegionLeaveEvent leave = new RegionLeaveEvent(region, entity, way);
-                Bukkit.getPluginManager().callEvent(leave);
-                if(leave.isCancelled()) {
-                    return true;
-                }
-                Executor.entityLater(entity, 1L, () -> Bukkit.getPluginManager().callEvent(new RegionLeftEvent(region, entity, way)));
-            }
-            regions.clear();
         }
 
+        for (ProtectedRegion region : entered) {
+            final RegionEnterEvent enter = new RegionEnterEvent(region, entity, way);
+            Bukkit.getPluginManager().callEvent(enter);
+            if (enter.isCancelled()) {
+                return true;
+            }
+        }
+        for (ProtectedRegion region : left) {
+            final RegionLeaveEvent leave = new RegionLeaveEvent(region, entity, way);
+            Bukkit.getPluginManager().callEvent(leave);
+            if (leave.isCancelled()) {
+                return true;
+            }
+        }
+
+        regions.addAll(entered);
+        regions.removeAll(left);
+        for (ProtectedRegion region : entered) {
+            Executor.entityLater(entity, 1L, () -> Bukkit.getPluginManager().callEvent(new RegionEnteredEvent(region, entity, way)));
+        }
+        for (ProtectedRegion region : left) {
+            Executor.entityLater(entity, 1L, () -> Bukkit.getPluginManager().callEvent(new RegionLeftEvent(region, entity, way)));
+        }
         return false;
     }
 
