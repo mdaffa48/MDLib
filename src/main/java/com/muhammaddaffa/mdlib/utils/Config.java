@@ -1,7 +1,7 @@
 package com.muhammaddaffa.mdlib.utils;
 
 import com.muhammaddaffa.mdlib.MDLib;
-import com.tchristofferson.configupdater.ConfigUpdater;
+import com.muhammaddaffa.mdlib.configupdater.ConfigUpdater;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
@@ -42,9 +42,8 @@ public class Config {
             if (!config.isShouldUpdate()) {
                 continue;
             }
-            // Get the config file
             try {
-                ConfigUpdater.update(MDLib.instance(), config.getFile().getName(), config.getFile());
+                ConfigUpdater.update(MDLib.instance(), config.resourcePath, config.getFile(), config.ignored);
             } catch(Exception ex) {
                 Logger.severe("Failed to update the " + config.getFile().getName());
                 ex.printStackTrace();
@@ -58,6 +57,7 @@ public class Config {
     private FileConfiguration config;
 
     private final String configName;
+    private final String resourcePath;
     private boolean shouldReload;
 
     private boolean shouldUpdate;
@@ -66,31 +66,18 @@ public class Config {
     public Config(String configName, String directory, boolean shouldReload) {
         JavaPlugin plugin = MDLib.instance();
         this.configName = configName;
+        this.resourcePath = (directory == null || directory.isEmpty() ? configName : directory + "/" + configName)
+                .replace('\\', '/').replaceAll("/+", "/");
         this.shouldReload = shouldReload;
 
-        if (!plugin.getDataFolder().exists()) {
-            plugin.getDataFolder().mkdirs();
+        this.file = new File(plugin.getDataFolder(), resourcePath);
+        File parent = file.getParentFile();
+        if (!parent.exists()) {
+            parent.mkdirs();
         }
 
-        if (directory == null) {
-            this.file = new File(plugin.getDataFolder(), configName);
-
-            if (!this.file.exists()) {
-                plugin.saveResource(configName, false);
-            }
-
-        } else {
-            File directoryFile = new File(plugin.getDataFolder() + File.separator + directory);
-            if (!directoryFile.exists()) {
-                directoryFile.mkdirs();
-            }
-
-            this.file = new File(plugin.getDataFolder() + File.separator + directory, configName);
-
-            if (!this.file.exists()) {
-                plugin.saveResource(directory + File.separator + configName, false);
-            }
-
+        if (!this.file.exists()) {
+            plugin.saveResource(resourcePath, false);
         }
 
         this.config = YamlConfiguration.loadConfiguration(file);
@@ -107,7 +94,12 @@ public class Config {
     }
 
     public void addIgnored(String ignoredPath) {
-        this.ignored.add(ignoredPath);
+        if (ignoredPath == null || ignoredPath.isBlank()) {
+            throw new IllegalArgumentException("Ignored path must not be null or blank");
+        }
+        if (!this.ignored.contains(ignoredPath)) {
+            this.ignored.add(ignoredPath);
+        }
     }
 
     public void broadcast(String path) {

@@ -51,10 +51,6 @@
         <configuration>
           <relocations>
             <relocation>
-              <pattern>com.tchristofferson.configupdater</pattern>
-              <shadedPattern>com.muhammaddaffa.mdlib.configupdater</shadedPattern>
-            </relocation>
-            <relocation>
               <pattern>com.cryptomorin.xseries</pattern>
               <shadedPattern>com.muhammaddaffa.mdlib.xseries</shadedPattern>
             </relocation>
