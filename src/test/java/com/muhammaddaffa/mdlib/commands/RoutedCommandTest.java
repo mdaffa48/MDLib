@@ -1,10 +1,12 @@
 package com.muhammaddaffa.mdlib.commands;
 
 import com.muhammaddaffa.mdlib.commands.args.CommandContext;
+import com.muhammaddaffa.mdlib.commands.args.ArgSuggester;
 import com.muhammaddaffa.mdlib.commands.args.OptionalArg;
 import com.muhammaddaffa.mdlib.commands.args.builtin.GreedyStringArg;
 import com.muhammaddaffa.mdlib.commands.args.builtin.IntArg;
 import com.muhammaddaffa.mdlib.commands.args.builtin.OnlinePlayerArg;
+import com.muhammaddaffa.mdlib.commands.args.builtin.StringArg;
 import com.muhammaddaffa.mdlib.commands.commands.RoutedCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -12,6 +14,8 @@ import org.bukkit.plugin.PluginManager;
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -219,6 +223,55 @@ class RoutedCommandTest {
         verifyNoInteractions(handler);
     }
 
+    @Test
+    void deniedSubcommandsAndAliasesNeverInvokeTheirSuggester() {
+        TestCommand command = new TestCommand();
+        ArgSuggester suggester = mock(ArgSuggester.class);
+        command.add("admin").alias("a").perm("help.admin")
+                .arg("target", new StringArg(), suggester).exec(handler);
+
+        assertEquals(List.of(), command.tabComplete(player, "help", new String[0]));
+        assertEquals(List.of(), command.tabComplete(player, "help", new String[]{""}));
+        assertEquals(List.of(), command.tabComplete(player, "help", new String[]{"admin", ""}));
+        assertEquals(List.of(), command.tabComplete(player, "help", new String[]{"a", ""}));
+        verifyNoInteractions(suggester);
+
+        when(player.hasPermission("help.admin")).thenReturn(true);
+        when(suggester.suggest(eq(player), eq("al"), any())).thenReturn(List.of("alice", "bob"));
+        assertEquals(List.of("alice"), command.tabComplete(player, "help", new String[]{"a", "al"}));
+    }
+
+    @Test
+    void explicitRootPlanPermissionHidesPlaceholderAndPreventsSuggestions() {
+        TestCommand command = new TestCommand();
+        ArgSuggester suggester = mock(ArgSuggester.class);
+        command.defaultPlan().perm("help.root").arg("first", new StringArg())
+                .arg("target", new StringArg(), suggester).exec(handler);
+        command.add("status").exec(handler);
+
+        assertEquals(List.of("status"), command.tabComplete(player, "help", new String[0]));
+        assertEquals(List.of("status"), command.tabComplete(player, "help", new String[]{""}));
+        assertEquals(List.of(), command.tabComplete(player, "help", new String[]{"value", ""}));
+        verifyNoInteractions(suggester);
+
+        when(player.hasPermission("help.root")).thenReturn(true);
+        when(suggester.suggest(eq(player), eq(""), any())).thenReturn(List.of("alice"));
+        assertEquals(List.of("<first>", "status"), command.tabComplete(player, "help", new String[0]));
+        assertEquals(List.of("alice"), command.tabComplete(player, "help", new String[]{"value", ""}));
+    }
+
+    @Test
+    void commandPermissionAlsoPreventsPublicSubcommandSuggestions() {
+        TestCommand command = new TestCommand(null, "help.use");
+        ArgSuggester suggester = mock(ArgSuggester.class);
+        command.add("status").arg("target", new StringArg(), suggester).exec(handler);
+
+        assertEquals(List.of(), command.tabComplete(player, "help", new String[0]));
+        assertEquals(List.of(), command.tabComplete(player, "help", new String[]{""}));
+        assertEquals(List.of(), command.tabComplete(player, "help", new String[]{"status", ""}));
+        verifyNoInteractions(suggester);
+    }
+
     private static final class TestCommand extends RoutedCommand {
 
         TestCommand() {
@@ -226,7 +279,11 @@ class RoutedCommandTest {
         }
 
         TestCommand(String usage) {
-            super("help", "", usage, null);
+            this(usage, null);
+        }
+
+        TestCommand(String usage, String permission) {
+            super("help", "", usage, permission);
         }
 
         CommandPlan add(String name) {

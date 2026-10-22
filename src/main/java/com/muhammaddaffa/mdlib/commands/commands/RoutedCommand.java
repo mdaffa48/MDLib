@@ -77,11 +77,15 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
             return this;
         }
 
-        private boolean handle(CommandSender sender, String[] raw, String fallbackPerm) throws Exception {
+        private boolean hasPermission(CommandSender sender, String fallbackPerm) {
             String permToCheck = permission != null && !permission.isBlank()
                     ? permission
                     : (isRoot() ? fallbackPerm : null);
-            if (permToCheck != null && !permToCheck.isBlank() && !sender.hasPermission(permToCheck)) {
+            return permToCheck == null || permToCheck.isBlank() || sender.hasPermission(permToCheck);
+        }
+
+        private boolean handle(CommandSender sender, String[] raw, String fallbackPerm) throws Exception {
+            if (!hasPermission(sender, fallbackPerm)) {
                 sender.sendMessage(Common.papi(sender, "§cYou don't have permission to use this command."));
                 return true;
             }
@@ -108,7 +112,10 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
             return true;
         }
 
-        private List<String> tab(CommandSender sender, String[] raw) {
+        private List<String> tab(CommandSender sender, String[] raw, String fallbackPerm) {
+            if (!hasPermission(sender, fallbackPerm)) {
+                return List.of();
+            }
             if (params.isEmpty()) return List.of();
 
             int argIndex = Math.max(0, raw.length - 1);
@@ -312,13 +319,16 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
 
     @Override
     public List<String> tabComplete(CommandSender sender, String alias, String[] raw) {
+        if (permission != null && !permission.isBlank() && !sender.hasPermission(permission)) {
+            return List.of();
+        }
         // FIRST TOKEN ("/cf " or "/cf a")
         if (raw.length == 1) {
             String prefix = raw[0] == null ? "" : raw[0];
             List<String> candidates = new java.util.ArrayList<>();
 
             // Root first-arg placeholder (e.g. "[amount]") — show as a candidate too
-            if (rootPlan.isDefined()) {
+            if (rootPlan.isDefined() && rootPlan.hasPermission(sender, permission)) {
                 String ph = rootPlan.firstParamPlaceholder();
                 if (ph != null) candidates.add(ph);
             }
@@ -341,7 +351,8 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
         // ZERO TOKENS (rare), just return both placeholder + subs without filtering
         if (raw.length == 0) {
             List<String> first = new java.util.ArrayList<>();
-            String ph = rootPlan.isDefined() ? rootPlan.firstParamPlaceholder() : null;
+            String ph = rootPlan.isDefined() && rootPlan.hasPermission(sender, permission)
+                    ? rootPlan.firstParamPlaceholder() : null;
             if (ph != null) first.add(ph);
             for (CommandPlan p : subs) {
                 String perm = p.permission();
@@ -360,10 +371,10 @@ public abstract class RoutedCommand implements SimpleCommandSpec {
         }
         if (matched != null) {
             String[] rest = java.util.Arrays.copyOfRange(raw, 1, raw.length);
-            return matched.tab(sender, rest);
+            return matched.tab(sender, rest, null);
         }
 
-        if (rootPlan.isDefined()) return rootPlan.tab(sender, raw);
+        if (rootPlan.isDefined()) return rootPlan.tab(sender, raw, permission);
         return List.of();
     }
 
