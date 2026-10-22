@@ -2,14 +2,11 @@ package com.muhammaddaffa.mdlib.commands;
 
 import com.muhammaddaffa.mdlib.commands.commands.SimpleCommandSpec;
 import com.muhammaddaffa.mdlib.commands.internal.BukkitCommandWrapper;
-import com.muhammaddaffa.mdlib.utils.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
-import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.plugin.Plugin;
 
-import java.lang.reflect.Field;
 import java.util.*;
 
 public final class CommandRegistry {
@@ -54,30 +51,32 @@ public final class CommandRegistry {
         return Bukkit.getCommandMap();
     }
 
-    @SuppressWarnings("unchecked")
     private void unregisterIfPresent(String name, List<String> aliases) {
-        if (!(commandMap instanceof SimpleCommandMap)) return;
-        try {
-            Field known = SimpleCommandMap.class.getDeclaredField("knownCommands");
-            known.setAccessible(true);
-            Map<String, Command> knownCommands = (Map<String, Command>) known.get(commandMap);
-
-            Set<String> keys = new HashSet<>();
-            String base = name.toLowerCase(Locale.ROOT);
-            String ns = plugin.getName().toLowerCase(Locale.ROOT) + ":" + base;
-            keys.add(base);
-            keys.add(ns);
-            for (String a : aliases) {
-                String al = a.toLowerCase(Locale.ROOT);
-                keys.add(al);
-                keys.add(plugin.getName().toLowerCase(Locale.ROOT) + ":" + al);
-            }
-
-            List<String> present = keys.stream().filter(knownCommands::containsKey).toList();
-            for (String k : present) knownCommands.remove(k);
-
-        } catch (Throwable t) {
-            Logger.warning("Could not fully unregister " + name + ": " + t.getMessage());
+        Map<String, Command> knownCommands = commandMap.getKnownCommands();
+        Set<String> keys = new HashSet<>();
+        keys.add(name.toLowerCase(Locale.ROOT));
+        for (String alias : aliases) {
+            keys.add(alias.toLowerCase(Locale.ROOT));
         }
+        String namespace = plugin.getName().toLowerCase(Locale.ROOT) + ":";
+        Set<Command> removed = new HashSet<>();
+        for (Command command : registeredCommands) {
+            if (keys.contains(command.getName().toLowerCase(Locale.ROOT))) {
+                removed.add(command);
+            }
+        }
+        for (String key : keys) {
+            Command command = knownCommands.get(key);
+            if (registeredCommands.contains(command)) {
+                removed.add(command);
+            }
+            command = knownCommands.get(namespace + key);
+            if (registeredCommands.contains(command)) {
+                removed.add(command);
+            }
+        }
+        knownCommands.entrySet().removeIf(entry -> removed.contains(entry.getValue()));
+        removed.forEach(command -> command.unregister(commandMap));
+        registeredCommands.removeAll(removed);
     }
 }
