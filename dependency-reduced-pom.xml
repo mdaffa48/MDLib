@@ -23,10 +23,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.5.3</version>
         <configuration>
-          <argLine>-javaagent:"${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar"</argLine>
-          <systemPropertyVariables>
-            <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
-          </systemPropertyVariables>
+          <argLine>-javaagent:"${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar" -Djava.io.tmpdir="${project.build.directory}"</argLine>
         </configuration>
       </plugin>
       <plugin>
