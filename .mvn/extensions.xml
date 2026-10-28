@@ -1,0 +1,7 @@
+<extensions>
+    <extension>
+        <groupId>studio.blocksmith.versioning</groupId>
+        <artifactId>versioning-maven-extension</artifactId>
+        <version>0.0.1</version>
+    </extension>
+</extensions>

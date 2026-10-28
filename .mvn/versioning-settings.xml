@@ -1,0 +1,16 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
+    <profiles>
+        <profile>
+            <id>blocksmith-versioning</id>
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>blocksmith-versioning</id>
+                    <url>https://repo.blocksmith.studio/releases</url>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+    </profiles>
+    <activeProfiles>
+        <activeProfile>blocksmith-versioning</activeProfile>
+    </activeProfiles>
+</settings>

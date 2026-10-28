@@ -77,36 +77,86 @@ class CommandRegistryTest {
     }
 
     @Test
-    void collisionsPreserveForeignCommandsWhileOwnedNamespacedEntriesAreRemoved() {
+    void collisionsOverrideForeignLabelsAndRestoreThemOnShutdown() {
         Plugin otherPlugin = mock(Plugin.class);
         when(otherPlugin.getName()).thenReturn("OtherPlugin");
         Command foreign = new BukkitCommandWrapper(otherPlugin,
-                new TestSpec("example", List.of("shared")));
+                new TestSpec("example", List.of("shared", "unrelated")));
         commandMap.register("otherplugin", foreign);
 
         registry.register(new TestSpec("example", List.of("shared", "own")));
         Command owned = commandMap.getCommand("testplugin:example");
         assertNotSame(foreign, owned);
-        assertSame(foreign, commandMap.getCommand("example"));
-        assertSame(foreign, commandMap.getCommand("shared"));
-        assertEquals("testplugin:example", owned.getLabel());
+        assertSame(owned, commandMap.getCommand("example"));
+        assertSame(owned, commandMap.getCommand("shared"));
+        assertSame(foreign, commandMap.getCommand("unrelated"));
+        assertSame(foreign, commandMap.getCommand("otherplugin:example"));
+        assertTrue(foreign.isRegistered());
+        assertEquals("example", owned.getLabel());
 
         registry.register(new TestSpec("example", List.of("replacement")));
-        Command replacement = commandMap.getCommand("testplugin:example");
+        Command replacement = commandMap.getCommand("example");
         assertNotSame(owned, replacement);
         assertFalse(owned.isRegistered());
         assertNull(commandMap.getCommand("own"));
         assertNull(commandMap.getCommand("testplugin:shared"));
-        registry.unregister("example", List.of("shared"));
+        registry.unregisterAll();
 
         assertFalse(replacement.isRegistered());
-        assertFalse(commandMap.getKnownCommands().containsValue(replacement));
         assertSame(foreign, commandMap.getCommand("example"));
         assertSame(foreign, commandMap.getCommand("shared"));
         assertSame(foreign, commandMap.getCommand("otherplugin:example"));
-        assertTrue(foreign.isRegistered());
-        registry.unregister("example", List.of("shared"));
-        assertSame(foreign, commandMap.getCommand("example"));
+        assertNull(commandMap.getCommand("own"));
+    }
+
+    @Test
+    void explicitUnregisterCanDisplaceForeignCommandBeforeRegistration() {
+        Command foreign = new BukkitCommandWrapper(mock(Plugin.class), new TestSpec("sell", List.of()));
+        commandMap.register("otherplugin", foreign);
+        registry.unregister("sell");
+        assertNull(commandMap.getCommand("sell"));
+        registry.register(new TestSpec("sell", List.of()));
+        assertNotSame(foreign, commandMap.getCommand("sell"));
+        registry.unregisterAll();
+        assertSame(foreign, commandMap.getCommand("sell"));
+    }
+
+    @Test
+    void cleanupDoesNotOverwriteANewerForeignRegistration() {
+        Command foreign = new BukkitCommandWrapper(mock(Plugin.class), new TestSpec("example", List.of()));
+        commandMap.register("otherplugin", foreign);
+        registry.register(new TestSpec("example", List.of()));
+        Command newer = new BukkitCommandWrapper(mock(Plugin.class), new TestSpec("example", List.of()));
+        commandMap.getKnownCommands().put("example", newer);
+        registry.unregisterAll();
+        assertSame(newer, commandMap.getCommand("example"));
+    }
+
+    @Test
+    void commandMapAccessFallsBackWhenPaperApiIsAbsent() {
+        Server server = mock(Server.class);
+        when(server.getCommandMap()).thenReturn(commandMap);
+        bukkit.when(Bukkit::getServer).thenReturn(server);
+        bukkit.when(Bukkit::getCommandMap).thenThrow(new NoSuchMethodError("Spigot fixture"));
+        CommandRegistry legacy = new CommandRegistry(mock(Plugin.class));
+        // Constructor success proves the reflective server method supplied the map.
+        legacy.unregisterAll();
+    }
+
+    @Test
+    void knownCommandsAccessFallsBackToInheritedBackingField() {
+        var backing = new HashMap<String, Command>();
+        SimpleCommandMap legacyMap = spy(new SimpleCommandMap(mock(Server.class), backing));
+        doThrow(new NoSuchMethodError("Spigot fixture")).when(legacyMap).getKnownCommands();
+        bukkit.when(Bukkit::getCommandMap).thenReturn(legacyMap);
+        Plugin owner = mock(Plugin.class);
+        when(owner.getName()).thenReturn("LegacyPlugin");
+        CommandRegistry legacy = new CommandRegistry(owner);
+        legacy.register(new TestSpec("legacy", List.of("old")));
+        assertNotNull(backing.get("legacy"));
+        legacy.unregisterAll();
+        assertNull(backing.get("legacy"));
+        assertNull(backing.get("old"));
     }
 
     @Test
