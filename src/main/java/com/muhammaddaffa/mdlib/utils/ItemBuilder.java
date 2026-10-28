@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -41,6 +42,8 @@ import java.util.stream.Collectors;
  * @author MrMicky
  */
 public class ItemBuilder {
+
+    private static final Pattern USERNAME = Pattern.compile("[A-Za-z0-9_]{1,16}");
 
     private final ItemStack item;
     private final ItemMeta meta;
@@ -226,8 +229,10 @@ public class ItemBuilder {
     }
 
     public ItemBuilder skull(String identifier){
-        OfflinePlayer player = Bukkit.getOfflinePlayer(identifier);
-        if (player.hasPlayedBefore()) {
+        OfflinePlayer player = USERNAME.matcher(identifier).matches()
+                ? Bukkit.getOfflinePlayerIfCached(identifier)
+                : null;
+        if (player != null && player.hasPlayedBefore()) {
             return skull(player);
         }
 
