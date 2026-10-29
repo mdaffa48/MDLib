@@ -361,6 +361,7 @@ public class UpdateChecker {
                     }
                 }
 
+                if (closed) return;
                 if (!isUsingLatestVersion() && !isOtherVersionNewer(usedVersion, latestVersion)) {
                     latestVersion = usedVersion;
                 }
@@ -405,7 +406,7 @@ public class UpdateChecker {
      * @return true if the latest found version is the one currently in use, otherwise false
      */
     public boolean isUsingLatestVersion() {
-        return usedVersion.equals(instance.latestVersion);
+        return usedVersion.equals(latestVersion);
     }
 
     /**

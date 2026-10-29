@@ -41,6 +41,33 @@ class CommandRegistryTest {
     }
 
     @Test
+    void commandCleanupSupportsMapsWithoutIteratorRemoval() {
+        java.util.Map<String, Command> backing = new HashMap<>();
+        java.util.Map<String, Command> forwarding = new java.util.AbstractMap<>() {
+            @Override
+            public java.util.Set<Entry<String, Command>> entrySet() {
+                return java.util.Collections.unmodifiableMap(backing).entrySet();
+            }
+            @Override
+            public Command put(String key, Command value) { return backing.put(key, value); }
+            @Override
+            public Command remove(Object key) { return backing.remove(key); }
+        };
+        SimpleCommandMap map = new SimpleCommandMap(mock(Server.class), forwarding);
+        bukkit.when(Bukkit::getCommandMap).thenReturn(map);
+        Plugin owner = mock(Plugin.class);
+        when(owner.getName()).thenReturn("ForwardingPlugin");
+        CommandRegistry commands = new CommandRegistry(owner);
+        commands.register(new TestSpec("example", List.of("old")));
+        commands.register(new TestSpec("example", List.of("new")));
+        assertNull(map.getCommand("old"));
+        assertNotNull(map.getCommand("new"));
+        commands.unregisterAll();
+        assertNull(map.getCommand("example"));
+        assertNull(map.getCommand("new"));
+    }
+
+    @Test
     void unregisterByNameRemovesEveryAliasAndUnregistersTheCommand() {
         registry.register(new TestSpec("example", List.of("one", "two")));
         Command command = commandMap.getCommand("example");

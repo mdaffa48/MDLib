@@ -45,11 +45,15 @@ public final class CommandRegistry {
     }
 
     public void unregisterAll() {
-        knownCommands.entrySet().removeIf(entry -> registeredCommands.contains(entry.getValue()));
+        for (String key : new ArrayList<>(knownCommands.keySet())) {
+            if (registeredCommands.contains(knownCommands.get(key))) knownCommands.remove(key);
+        }
         registeredCommands.forEach(command -> command.unregister(commandMap));
         registeredCommands.clear();
         // Preserve any newer registration that has taken over while we were enabled.
-        displacedCommands.forEach(knownCommands::putIfAbsent);
+        displacedCommands.forEach((key, command) -> {
+            if (!knownCommands.containsKey(key)) knownCommands.put(key, command);
+        });
         displacedCommands.clear();
     }
 
@@ -109,7 +113,9 @@ public final class CommandRegistry {
             command = knownCommands.get(namespace + key);
             if (registeredCommands.contains(command)) removed.add(command);
         }
-        knownCommands.entrySet().removeIf(entry -> removed.contains(entry.getValue()));
+        for (String key : new ArrayList<>(knownCommands.keySet())) {
+            if (removed.contains(knownCommands.get(key))) knownCommands.remove(key);
+        }
         removed.forEach(command -> command.unregister(commandMap));
         registeredCommands.removeAll(removed);
         for (String key : keys) {

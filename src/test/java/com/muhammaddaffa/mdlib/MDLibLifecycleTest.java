@@ -167,6 +167,7 @@ class MDLibLifecycleTest {
         MDLib.shutdown();
 
         assertNull(UpdateChecker.getInstance());
+        assertDoesNotThrow(checker::isUsingLatestVersion);
         assertThrows(IllegalStateException.class, () -> checker.checkNow());
         assertTrue(HandlerList.getRegisteredListeners(plugin).isEmpty());
         MDLib.onEnable(plugin);
