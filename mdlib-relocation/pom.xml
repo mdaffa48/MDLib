@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.muhammaddaffa</groupId>
+        <artifactId>mdlib-parent</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>MDLib</artifactId>
+    <packaging>pom</packaging>
+
+    <name>MDLib</name>
+
+    <description>Relocates the old com.muhammaddaffa:MDLib coordinate to mdlib-spigot</description>
+
+    <distributionManagement>
+        <relocation>
+            <artifactId>mdlib-spigot</artifactId>
+            <message>MDLib is now split per platform; use com.muhammaddaffa:mdlib-spigot.</message>
+        </relocation>
+    </distributionManagement>
+</project>

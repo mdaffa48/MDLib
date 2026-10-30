@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.muhammaddaffa</groupId>
+        <artifactId>mdlib-parent</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>mdlib-velocity</artifactId>
+
+    <name>MDLib Velocity</name>
+
+    <description>MDLib for Velocity proxy plugins</description>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- Keeps velocity-api's @Plugin processor from writing a velocity-plugin.json into the library jar -->
+                    <proc>none</proc>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <repositories>
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.muhammaddaffa</groupId>
+            <artifactId>mdlib-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- velocity api -->
+        <dependency>
+            <groupId>com.velocitypowered</groupId>
+            <artifactId>velocity-api</artifactId>
+            <version>4.3.1</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>
