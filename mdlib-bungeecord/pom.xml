@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.muhammaddaffa</groupId>
+        <artifactId>mdlib-parent</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>mdlib-bungeecord</artifactId>
+
+    <name>MDLib BungeeCord</name>
+
+    <description>MDLib for BungeeCord proxy plugins</description>
+
+    <repositories>
+        <!-- bungeecord-protocol needs com.mojang:brigadier, which is not on Maven Central -->
+        <repository>
+            <id>minecraft-libraries</id>
+            <name>Minecraft Libraries</name>
+            <url>https://libraries.minecraft.net/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.muhammaddaffa</groupId>
+            <artifactId>mdlib-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- bungeecord api -->
+        <dependency>
+            <groupId>net.md-5</groupId>
+            <artifactId>bungeecord-api</artifactId>
+            <version>1.21-R0.4</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Adventure, which BungeeCord does not ship, for MiniMessage colors -->
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-api</artifactId>
+            <version>${adventure.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-minimessage</artifactId>
+            <version>${adventure.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-serializer-legacy</artifactId>
+            <version>${adventure.version}</version>
+        </dependency>
+    </dependencies>
+</project>

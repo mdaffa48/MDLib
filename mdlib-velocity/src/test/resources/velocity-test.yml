@@ -1,0 +1,18 @@
+# Bundled test config
+messages:
+  single: "&aHello %player%"
+  multi:
+    - "line one %player%"
+    - "line two"
+section:
+  amount: 5
+  ratio: 2.5
+  enabled: true
+  disabled: false
+  big: 9000000000
+  numbers:
+    - 1
+    - "2"
+    - x
+levels:
+  1: first
