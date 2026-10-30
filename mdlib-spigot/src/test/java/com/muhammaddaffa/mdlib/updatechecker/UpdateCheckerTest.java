@@ -3,6 +3,7 @@ package com.muhammaddaffa.mdlib.updatechecker;
 import com.muhammaddaffa.mdlib.task.ExecutorManager;
 import com.muhammaddaffa.mdlib.task.ExecutorProvider;
 import org.bukkit.Bukkit;
+import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -39,6 +40,7 @@ class UpdateCheckerTest {
         console = mock(ConsoleCommandSender.class);
         when(plugin.getDescription()).thenReturn(new PluginDescriptionFile("UpdateTest", " 1.0 ", "example.Main"));
         bukkit = mockStatic(Bukkit.class);
+        bukkit.when(Bukkit::getServer).thenReturn(mock(Server.class));
         bukkit.when(Bukkit::getPluginManager).thenReturn(plugins);
         bukkit.when(Bukkit::getConsoleSender).thenReturn(console);
         provider = mock(ExecutorProvider.class);
